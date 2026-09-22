@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>몬스터 탐험 게임</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">MONSTER FIELD</div>
+    <div class="wallet">💰 <span id="money">1000</span> G</div>
+  </header>
+
+  <main>
+    <section id="home" class="page active">
+      <div class="hero">
+        <div class="eyebrow">ADVENTURE SYSTEM</div>
+        <h1>오늘도 탐험을<br>떠나볼까요?</h1>
+        <p>지도를 탐색하고 몬스터를 만나<br>아이템을 모아보세요.</p>
+        <button class="primary" data-page="map">🗺️ 탐험 시작</button>
+      </div>
+      <div class="quick">
+        <button data-page="members"><b>👥</b><span>멤버</span></button>
+        <button data-page="map"><b>🗺️</b><span>지도</span></button>
+        <button data-page="bag"><b>🎒</b><span>가방</span></button>
+        <button data-page="shop"><b>🏪</b><span>상점</span></button>
+      </div>
+    </section>
+
+    <section id="members" class="page">
+      <div class="section-head"><h2>멤버</h2><p>함께하는 멤버들의 기록</p></div>
+      <div id="member-list" class="member-grid"></div>
+    </section>
+
+    <section id="profile" class="page">
+      <button class="back" data-page="members">← 멤버 목록</button>
+      <div id="profile-content"></div>
+    </section>
+
+    <section id="map" class="page">
+      <div class="section-head"><h2>지도</h2><p>지역을 선택하고 탐색하세요.</p></div>
+      <div class="map-card">
+        <div class="map-art">
+          <span class="land land1"></span><span class="land land2"></span>
+          <span class="tree t1">🌲</span><span class="tree t2">🌲</span><span class="tree t3">🌳</span>
+          <span class="water">💧</span><span class="mountain">⛰️</span>
+          <button class="map-point forest" data-area="숲">🌲<small>푸른 숲</small></button>
+          <button class="map-point cave" data-area="동굴">🪨<small>수정 동굴</small></button>
+          <button class="map-point lake" data-area="호수">💧<small>달빛 호수</small></button>
+        </div>
+      </div>
+      <div class="explore-box">
+        <div><span>현재 지역</span><strong id="current-area">푸른 숲</strong></div>
+        <button class="primary" id="explore-btn">🔎 탐색하기</button>
+      </div>
+      <div id="encounter"></div>
+    </section>
+
+    <section id="bag" class="page">
+      <div class="section-head"><h2>가방</h2><p>획득한 아이템을 확인하세요.</p></div>
+      <div id="bag-list" class="item-list"></div>
+    </section>
+
+    <section id="shop" class="page">
+      <div class="section-head"><h2>상점</h2><p>필요한 물건을 구매할 수 있습니다.</p></div>
+      <div class="special">⭐ <div><b>오늘의 특별상품</b><span id="special-name"></span></div><strong id="special-price"></strong></div>
+      <div id="shop-list" class="shop-list"></div>
+    </section>
+  </main>
+
+  <nav>
+    <button data-page="home">⌂<span>홈</span></button>
+    <button data-page="members">♙<span>멤버</span></button>
+    <button data-page="map">⌖<span>지도</span></button>
+    <button data-page="bag">▣<span>가방</span></button>
+    <button data-page="shop">♜<span>상점</span></button>
+  </nav>
+</div>
+<div id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>
