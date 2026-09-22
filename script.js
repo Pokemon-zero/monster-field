@@ -387,6 +387,13 @@ function go(page) {
 
 document.addEventListener("click", e => {
 
+  /* 모달 안에서 발생한 클릭은
+     바깥쪽 클릭 처리로 넘어가지 않게 함 */
+
+  if (e.target.closest(".move-selector")) {
+    return;
+  }
+
 
   /* =========================
      기술 슬롯 클릭
