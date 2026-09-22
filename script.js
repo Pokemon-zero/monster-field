@@ -1,12 +1,8 @@
-/* =========================
-   Supabase
-========================= */
-
 const SUPABASE_URL =
   "https://zjaylououskihlejjasa.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_-a_siX-BtZ5auQudGrhkCA_nMG4MrhN";
+  "sb_publishable_-a_siX-BtZ5auQudGrhkCA_nMG4MrN";
 
 const supabaseClient =
   window.supabase.createClient(
@@ -16,14 +12,7 @@ const supabaseClient =
 
 
 /* =========================
-   로그인한 트레이너
-========================= */
-
-let currentTrainerNumber = null;
-
-
-/* =========================
-   기본 게임 데이터
+   기본 상태
 ========================= */
 
 const defaultState = {
@@ -51,6 +40,15 @@ const defaultState = {
 
 
 /* =========================
+   로그인 상태
+========================= */
+
+let currentUser = null;
+
+let currentTrainerNumber = null;
+
+
+/* =========================
    포획 실패 확률
 ========================= */
 
@@ -64,7 +62,7 @@ const CATCH_FAIL_RATE = 0.2;
 let state =
   JSON.parse(
     localStorage.getItem("monsterGame") || "null"
-  ) || defaultState;
+  ) || structuredClone(defaultState);
 
 
 /* =========================
@@ -75,9 +73,11 @@ if (!Array.isArray(state.monsters)) {
   state.monsters = [];
 }
 
+
 state.monsters.forEach(pokemon => {
 
   delete pokemon.hp;
+
   delete pokemon.maxHp;
 
 });
@@ -98,74 +98,50 @@ if (!state.inventory) {
 
 }
 
+
 if (state.inventory.potion === undefined) {
   state.inventory.potion = 2;
 }
+
 
 if (state.inventory.ball === undefined) {
   state.inventory.ball = 3;
 }
 
+
 if (state.inventory.herb === undefined) {
   state.inventory.herb = 0;
 }
+
 
 if (state.inventory.rareCandy === undefined) {
   state.inventory.rareCandy = 0;
 }
 
+
 if (!state.area) {
   state.area = "푸른 숲";
 }
+
+
+if (!Array.isArray(state.monsters)) {
+  state.monsters = [];
+}
+
 
 if (state.encounter === undefined) {
   state.encounter = null;
 }
 
+
 if (state.exploreCount === undefined) {
   state.exploreCount = 0;
 }
 
+
 if (state.exploreDate === undefined) {
   state.exploreDate = "";
 }
-
-
-/* =========================
-   기술 데이터
-========================= */
-
-const moveData = {
-
-  꼬렛: [
-
-    {
-      name: "몸통박치기",
-      learnLevel: 1,
-      power: 35,
-      accuracy: 95,
-      pp: 35
-    },
-
-    {
-      name: "꼬리흔들기",
-      learnLevel: 1,
-      power: null,
-      accuracy: 100,
-      pp: 30
-    },
-
-    {
-      name: "전광석화",
-      learnLevel: 7,
-      power: 40,
-      accuracy: 100,
-      pp: 30
-    }
-
-  ]
-
-};
 
 
 /* =========================
@@ -210,37 +186,566 @@ const members = [
 
 
 /* =========================
+   현재 로그인한 멤버
+========================= */
+
+function getCurrentMember() {
+
+  if (!currentTrainerNumber) {
+    return null;
+  }
+
+  return members.find(
+    member =>
+      String(member.trainerNumber) ===
+      String(currentTrainerNumber)
+  ) || null;
+
+}
+
+
+/* =========================
+   트레이너 번호 → 내부 이메일
+========================= */
+
+function trainerNumberToEmail(
+  trainerNumber
+) {
+
+  return (
+    String(trainerNumber).trim() +
+    "@pokemon-zero.local"
+  );
+
+}
+
+
+/* =========================
+   로그인 화면 표시
+========================= */
+
+function showLoginScreen() {
+
+  document.body.classList.remove(
+    "logged-in"
+  );
+
+
+  const trainerInput =
+    document.getElementById(
+      "trainer-number"
+    );
+
+  const passwordInput =
+    document.getElementById(
+      "login-password"
+    );
+
+  const message =
+    document.getElementById(
+      "login-message"
+    );
+
+
+  if (trainerInput) {
+    trainerInput.value = "";
+  }
+
+
+  if (passwordInput) {
+    passwordInput.value = "";
+  }
+
+
+  if (message) {
+    message.textContent = "";
+  }
+
+}
+
+
+/* =========================
+   게임 화면 표시
+========================= */
+
+function showGameScreen() {
+
+  document.body.classList.add(
+    "logged-in"
+  );
+
+
+  render();
+
+}
+
+
+/* =========================
+   로그인
+========================= */
+
+async function login() {
+
+  const trainerInput =
+    document.getElementById(
+      "trainer-number"
+    );
+
+  const passwordInput =
+    document.getElementById(
+      "login-password"
+    );
+
+  const message =
+    document.getElementById(
+      "login-message"
+    );
+
+  const loginButton =
+    document.getElementById(
+      "login-btn"
+    );
+
+
+  if (
+    !trainerInput ||
+    !passwordInput
+  ) {
+
+    return;
+
+  }
+
+
+  const trainerNumber =
+    trainerInput.value.trim();
+
+
+  const password =
+    passwordInput.value;
+
+
+  if (!/^\d{6}$/.test(trainerNumber)) {
+
+    if (message) {
+
+      message.textContent =
+        "트레이너 번호는 6자리 숫자입니다.";
+
+    }
+
+    return;
+
+  }
+
+
+  if (!password) {
+
+    if (message) {
+
+      message.textContent =
+        "비밀번호를 입력해주세요.";
+
+    }
+
+    return;
+
+  }
+
+
+  if (loginButton) {
+
+    loginButton.disabled = true;
+
+    loginButton.textContent =
+      "로그인 중...";
+
+  }
+
+
+  if (message) {
+    message.textContent = "";
+  }
+
+
+  const email =
+    trainerNumberToEmail(
+      trainerNumber
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signInWithPassword({
+
+      email: email,
+
+      password: password
+
+    });
+
+
+  if (error) {
+
+    console.error(
+      "로그인 오류:",
+      error
+    );
+
+
+    if (message) {
+
+      message.textContent =
+        "트레이너 번호 또는 비밀번호가 올바르지 않습니다.";
+
+    }
+
+
+    if (loginButton) {
+
+      loginButton.disabled = false;
+
+      loginButton.textContent =
+        "로그인";
+
+    }
+
+    return;
+
+  }
+
+
+  currentUser =
+    data.user;
+
+
+  currentTrainerNumber =
+    trainerNumber;
+
+
+  showGameScreen();
+
+
+  if (loginButton) {
+
+    loginButton.disabled = false;
+
+    loginButton.textContent =
+      "로그인";
+
+  }
+
+}
+
+
+/* =========================
+   로그아웃
+========================= */
+
+async function logout() {
+
+  await supabaseClient.auth.signOut();
+
+  currentUser = null;
+
+  currentTrainerNumber = null;
+
+  showLoginScreen();
+
+}
+
+
+/* =========================
+   로그인 상태 확인
+========================= */
+
+async function checkLogin() {
+
+  const {
+    data
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  const session =
+    data.session;
+
+
+  if (!session || !session.user) {
+
+    currentUser = null;
+
+    currentTrainerNumber = null;
+
+    showLoginScreen();
+
+    return;
+
+  }
+
+
+  currentUser =
+    session.user;
+
+
+  const email =
+    currentUser.email || "";
+
+
+  const trainerNumber =
+    email.split("@")[0];
+
+
+  if (
+    /^\d{6}$/.test(trainerNumber)
+  ) {
+
+    currentTrainerNumber =
+      trainerNumber;
+
+  } else {
+
+    currentTrainerNumber = null;
+
+  }
+
+
+  if (!currentTrainerNumber) {
+
+    await supabaseClient.auth.signOut();
+
+    showLoginScreen();
+
+    return;
+
+  }
+
+
+  showGameScreen();
+
+}
+
+
+/* =========================
+   로그인 버튼
+========================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    const loginButton =
+      document.getElementById(
+        "login-btn"
+      );
+
+
+    if (loginButton) {
+
+      loginButton.addEventListener(
+        "click",
+        login
+      );
+
+    }
+
+
+    const passwordInput =
+      document.getElementById(
+        "login-password"
+      );
+
+
+    if (passwordInput) {
+
+      passwordInput.addEventListener(
+        "keydown",
+        e => {
+
+          if (e.key === "Enter") {
+
+            login();
+
+          }
+
+        }
+      );
+
+    }
+
+
+    const trainerInput =
+      document.getElementById(
+        "trainer-number"
+      );
+
+
+    if (trainerInput) {
+
+      trainerInput.addEventListener(
+        "input",
+        () => {
+
+          trainerInput.value =
+            trainerInput.value
+              .replace(/\D/g, "")
+              .slice(0, 6);
+
+        }
+      );
+
+    }
+
+
+    checkLogin();
+
+  }
+);
+
+
+/* =========================
+   Supabase 로그인 상태 변화
+========================= */
+
+supabaseClient.auth.onAuthStateChange(
+  (event, session) => {
+
+    if (!session || !session.user) {
+
+      currentUser = null;
+
+      currentTrainerNumber = null;
+
+      showLoginScreen();
+
+      return;
+
+    }
+
+
+    currentUser =
+      session.user;
+
+
+    const email =
+      currentUser.email || "";
+
+
+    const trainerNumber =
+      email.split("@")[0];
+
+
+    if (
+      /^\d{6}$/.test(trainerNumber)
+    ) {
+
+      currentTrainerNumber =
+        trainerNumber;
+
+    }
+
+
+    showGameScreen();
+
+  }
+);
+
+
+/* =========================
+   기술 데이터
+========================= */
+
+const moveData = {
+
+  꼬렛: [
+
+    {
+      name: "몸통박치기",
+      learnLevel: 1,
+      power: 35,
+      accuracy: 95,
+      pp: 35
+    },
+
+    {
+      name: "꼬리흔들기",
+      learnLevel: 1,
+      power: null,
+      accuracy: 100,
+      pp: 30
+    },
+
+    {
+      name: "전광석화",
+      learnLevel: 7,
+      power: 40,
+      accuracy: 100,
+      pp: 30
+    }
+
+  ]
+
+};
+
+
+/* =========================
    아이템
 ========================= */
 
 const items = {
 
   potion: {
+
     name: "상처약",
+
     icon: "🧪",
+
     price: 200,
-    desc: "포켓몬의 상태를 회복하는 아이템."
+
+    desc:
+      "포켓몬의 상태를 회복하는 아이템."
+
   },
 
   ball: {
+
     name: "몬스터볼",
+
     icon: "🔴",
+
     price: 100,
-    desc: "야생 포켓몬을 포획할 때 사용한다."
+
+    desc:
+      "야생 포켓몬을 포획할 때 사용한다."
+
   },
 
   herb: {
+
     name: "오랭열매",
+
     icon: "🌿",
+
     price: 80,
-    desc: "탐험 중 발견한 오랭열매."
+
+    desc:
+      "탐험 중 발견한 오랭열매."
+
   },
 
   rareCandy: {
+
     name: "이상한사탕",
+
     icon: "🍬",
+
     price: 1000,
-    desc: "포켓몬의 레벨을 1 올린다."
+
+    desc:
+      "포켓몬의 레벨을 1 올린다."
+
   }
 
 };
@@ -291,266 +796,6 @@ const monsters = [
 
 
 /* =========================
-   트레이너 번호 → Supabase 로그인용 ID
-========================= */
-
-function trainerToLoginId(trainerNumber) {
-
-  return (
-    trainerNumber +
-    "@pokemon-zero.local"
-  );
-
-}
-
-
-/* =========================
-   로그인
-========================= */
-
-async function login() {
-
-  const trainerInput =
-    document.getElementById(
-      "login-trainer"
-    );
-
-  const passwordInput =
-    document.getElementById(
-      "login-password"
-    );
-
-  const message =
-    document.getElementById(
-      "login-message"
-    );
-
-
-  if (
-    !trainerInput ||
-    !passwordInput ||
-    !message
-  ) {
-    return;
-  }
-
-
-  const trainerNumber =
-    trainerInput.value.trim();
-
-
-  const password =
-    passwordInput.value;
-
-
-  if (!/^\d{6}$/.test(trainerNumber)) {
-
-    message.textContent =
-      "트레이너 번호는 6자리 숫자입니다.";
-
-    return;
-
-  }
-
-
-  if (!password) {
-
-    message.textContent =
-      "비밀번호를 입력해주세요.";
-
-    return;
-
-  }
-
-
-  message.textContent =
-    "로그인 중...";
-
-
-  const loginId =
-    trainerToLoginId(
-      trainerNumber
-    );
-
-
-  const { data, error } =
-    await supabaseClient.auth.signInWithPassword({
-
-      email: loginId,
-
-      password: password
-
-    });
-
-
-  if (error) {
-
-    console.error(error);
-
-    message.textContent =
-      "트레이너 번호 또는 비밀번호가 올바르지 않습니다.";
-
-    return;
-
-  }
-
-
-  currentTrainerNumber =
-    trainerNumber;
-
-
-  localStorage.setItem(
-    "trainerNumber",
-    trainerNumber
-  );
-
-
-  document.getElementById(
-    "login-screen"
-  ).style.display = "none";
-
-
-  document.getElementById(
-    "app"
-  ).style.display = "block";
-
-
-  message.textContent = "";
-
-
-  render();
-
-}
-
-
-/* =========================
-   로그아웃
-========================= */
-
-async function logout() {
-
-  await supabaseClient.auth.signOut();
-
-
-  currentTrainerNumber = null;
-
-
-  localStorage.removeItem(
-    "trainerNumber"
-  );
-
-
-  document.getElementById(
-    "app"
-  ).style.display = "none";
-
-
-  document.getElementById(
-    "login-screen"
-  ).style.display = "flex";
-
-}
-
-
-/* =========================
-   로그인 상태 확인
-========================= */
-
-async function checkLogin() {
-
-  const { data } =
-    await supabaseClient.auth.getSession();
-
-
-  if (data.session) {
-
-    const savedTrainer =
-      localStorage.getItem(
-        "trainerNumber"
-      );
-
-
-    if (savedTrainer) {
-
-      currentTrainerNumber =
-        savedTrainer;
-
-      document.getElementById(
-        "login-screen"
-      ).style.display = "none";
-
-      document.getElementById(
-        "app"
-      ).style.display = "block";
-
-      render();
-
-      return;
-
-    }
-
-  }
-
-
-  document.getElementById(
-    "login-screen"
-  ).style.display = "flex";
-
-
-  document.getElementById(
-    "app"
-  ).style.display = "none";
-
-}
-
-
-/* =========================
-   로그인 버튼
-========================= */
-
-const loginButton =
-  document.getElementById(
-    "login-btn"
-  );
-
-
-if (loginButton) {
-
-  loginButton.addEventListener(
-    "click",
-    login
-  );
-
-}
-
-
-/* =========================
-   Enter 키 로그인
-========================= */
-
-document.addEventListener(
-  "keydown",
-  e => {
-
-    if (
-      e.key === "Enter" &&
-      (
-        document.activeElement?.id ===
-          "login-trainer" ||
-        document.activeElement?.id ===
-          "login-password"
-      )
-    ) {
-
-      login();
-
-    }
-
-  }
-);
-
-
-/* =========================
    날짜 확인
 ========================= */
 
@@ -573,8 +818,7 @@ function checkExploreDay() {
 
 
   if (
-    state.exploreDate !==
-    today
+    state.exploreDate !== today
   ) {
 
     state.exploreDate =
@@ -659,13 +903,16 @@ function toast(t) {
   );
 
 
-  setTimeout(() => {
+  setTimeout(
+    () => {
 
-    element.classList.remove(
-      "show"
-    );
+      element.classList.remove(
+        "show"
+      );
 
-  }, 1800);
+    },
+    1800
+  );
 
 }
 
@@ -676,15 +923,15 @@ function toast(t) {
 
 function go(page) {
 
-  document.querySelectorAll(
-    ".page"
-  ).forEach(x => {
+  document
+    .querySelectorAll(".page")
+    .forEach(x => {
 
-    x.classList.remove(
-      "active"
-    );
+      x.classList.remove(
+        "active"
+      );
 
-  });
+    });
 
 
   const target =
@@ -702,20 +949,16 @@ function go(page) {
   }
 
 
-  document.querySelectorAll(
-    "nav button"
-  ).forEach(x => {
+  document
+    .querySelectorAll("nav button")
+    .forEach(x => {
 
-    x.classList.toggle(
+      x.classList.toggle(
+        "active",
+        x.dataset.page === page
+      );
 
-      "active",
-
-      x.dataset.page ===
-        page
-
-    );
-
-  });
+    });
 
 
   render();
@@ -732,17 +975,23 @@ document.addEventListener(
   e => {
 
 
+    /* =========================
+       모달 안쪽 클릭
+    ========================= */
+
     if (
       e.target.closest(
         ".move-selector"
       )
     ) {
+
       return;
+
     }
 
 
     /* =========================
-       기술 슬롯
+       기술 슬롯 클릭
     ========================= */
 
     const moveSlot =
@@ -836,7 +1085,12 @@ document.addEventListener(
       );
 
 
-    if (monsterButton) {
+    if (
+      monsterButton &&
+      !e.target.closest(
+        ".move-slot"
+      )
+    ) {
 
       showMonsterDetail(
         monsterButton.dataset.monsterId
@@ -1011,7 +1265,8 @@ function showProfile(id) {
 
   const member =
     members.find(
-      x => x.id === id
+      x =>
+        x.id === id
     );
 
 
@@ -1032,7 +1287,7 @@ function showProfile(id) {
   const profileType =
     isMyProfile
       ? "내 프로필"
-      : "프로필";
+      : "다른 사람 프로필";
 
 
   document.getElementById(
@@ -1057,10 +1312,10 @@ function showProfile(id) {
         ${member.desc}
       </p>
 
-      <p>
+      <small>
         트레이너 번호
         ${member.trainerNumber}
-      </p>
+      </small>
 
     </div>
 
@@ -1081,9 +1336,8 @@ function getLearnableMoves(
 ) {
 
   const data =
-    moveData[
-      pokemon.name
-    ] || [];
+    moveData[pokemon.name] ||
+    [];
 
 
   return data.filter(
@@ -1154,10 +1408,11 @@ function giveInitialMoves(
     move => {
 
       if (
-        pokemon.moves.length >=
-        4
+        pokemon.moves.length >= 4
       ) {
+
         return;
+
       }
 
 
@@ -1231,8 +1486,7 @@ function explore() {
 
 
   if (
-    state.exploreCount >=
-    10
+    state.exploreCount >= 10
   ) {
 
     toast(
@@ -1261,16 +1515,16 @@ function explore() {
   }
 
 
-  /* 10% 확률 */
+  /* =========================
+     10% 확률
+     포켓몬을 만나지 않음
+  ========================= */
 
   if (
-    Math.random() <
-    0.1
+    Math.random() < 0.1
   ) {
 
-    state.money +=
-      100;
-
+    state.money += 100;
 
     state.encounter =
       null;
@@ -1289,17 +1543,21 @@ function explore() {
   }
 
 
-  /* 포켓몬 만남 */
+  /* =========================
+     포켓몬 만남
+  ========================= */
 
   state.encounter =
     createWildMonster();
 
 
-  /* 40% 확률 오랭열매 */
+  /* =========================
+     40% 확률
+     오랭열매 발견
+  ========================= */
 
   if (
-    Math.random() <
-    0.4
+    Math.random() < 0.4
   ) {
 
     state.inventory.herb++;
@@ -1345,7 +1603,9 @@ function catchMonster() {
   }
 
 
-  if (!state.inventory.ball) {
+  if (
+    !state.inventory.ball
+  ) {
 
     toast(
       "몬스터볼이 없습니다!"
@@ -1362,6 +1622,8 @@ function catchMonster() {
 
   state.inventory.ball--;
 
+
+  /* 20% 실패 / 80% 성공 */
 
   const success =
     Math.random() >=
@@ -1415,7 +1677,6 @@ function catchMonster() {
       `${caught.name} Lv.${caught.level}을/를 잡았다!`
     );
 
-
   } else {
 
     state.encounter =
@@ -1451,13 +1712,17 @@ function renderMonsters() {
   }
 
 
-  if (!state.monsters.length) {
+  if (
+    !state.monsters.length
+  ) {
 
     list.innerHTML = `
 
       <div class="empty-monsters">
 
-        <div>🌱</div>
+        <div>
+          🌱
+        </div>
 
         <h3>
           아직 포획한 포켓몬이 없습니다.
@@ -1487,6 +1752,7 @@ function renderMonsters() {
   list.innerHTML =
     state.monsters
       .map(m => {
+
 
         if (
           !Array.isArray(
@@ -1559,7 +1825,9 @@ function renderMonsters() {
               </h3>
 
               <p>
-                Lv.${m.level} · ${m.type} 타입
+                Lv.${m.level}
+                ·
+                ${m.type} 타입
               </p>
 
               <div class="monster-moves">
@@ -1668,10 +1936,14 @@ function showMonsterDetail(
 
               <span>
                 위력
-                ${move.power === null ? "-" : move.power}
-                · 명중
+                ${move.power === null
+                  ? "-"
+                  : move.power}
+                ·
+                명중
                 ${move.accuracy}%
-                · PP
+                ·
+                PP
                 ${move.pp}
               </span>
 
@@ -1766,9 +2038,7 @@ function showMoveSelector(
 
 
   const currentMove =
-    pokemon.moves[
-      slotIndex
-    ];
+    pokemon.moves[slotIndex];
 
 
   const available =
@@ -1777,14 +2047,10 @@ function showMoveSelector(
 
         const alreadyInOtherSlot =
           pokemon.moves.some(
-            (
-              learned,
-              index
-            ) => {
+            (learned, index) => {
 
               return (
-                index !==
-                  slotIndex &&
+                index !== slotIndex &&
                 learned &&
                 learned.name ===
                   move.name
@@ -1813,42 +2079,48 @@ function showMoveSelector(
 
   const names =
     available
-      .map(move => {
+      .map(
+        move => {
 
-        const isCurrent =
-          currentMove &&
-          currentMove.name ===
-            move.name;
+          const isCurrent =
+            currentMove &&
+            currentMove.name ===
+              move.name;
 
 
-        return `
+          return `
 
-          <button
-            class="learn-move"
-            data-monster-id="${pokemon.id}"
-            data-slot-index="${slotIndex}"
-            data-move-name="${move.name}"
-          >
+            <button
+              class="learn-move"
+              data-monster-id="${pokemon.id}"
+              data-slot-index="${slotIndex}"
+              data-move-name="${move.name}"
+            >
 
-            <b>
-              ${move.name}
-              ${isCurrent ? " ✓" : ""}
-            </b>
+              <b>
+                ${move.name}
+                ${isCurrent ? " ✓" : ""}
+              </b>
 
-            <span>
-              위력
-              ${move.power === null ? "-" : move.power}
-              · 명중
-              ${move.accuracy}%
-              · PP
-              ${move.pp}
-            </span>
+              <span>
+                위력
+                ${move.power === null
+                  ? "-"
+                  : move.power}
+                ·
+                명중
+                ${move.accuracy}%
+                ·
+                PP
+                ${move.pp}
+              </span>
 
-          </button>
+            </button>
 
-        `;
+          `;
 
-      })
+        }
+      )
       .join("");
 
 
@@ -1871,7 +2143,8 @@ function showMoveSelector(
       </h3>
 
       <p>
-        ${pokemon.name} Lv.${pokemon.level}
+        ${pokemon.name}
+        Lv.${pokemon.level}
       </p>
 
       <div class="learn-move-list">
@@ -1929,12 +2202,8 @@ function showMoveSelector(
 
 
       if (
-        pokemon.moves[
-          slotIndex
-        ] &&
-        pokemon.moves[
-          slotIndex
-        ].name ===
+        pokemon.moves[slotIndex] &&
+        pokemon.moves[slotIndex].name ===
           newMove.name
       ) {
 
@@ -1945,9 +2214,7 @@ function showMoveSelector(
       }
 
 
-      pokemon.moves[
-        slotIndex
-      ] =
+      pokemon.moves[slotIndex] =
         createMove(
           newMove
         );
@@ -1995,7 +2262,9 @@ function showMoveSelector(
 
 function useItem(id) {
 
-  if (!state.inventory[id]) {
+  if (
+    !state.inventory[id]
+  ) {
 
     toast(
       "아이템이 없다."
@@ -2045,7 +2314,7 @@ function useItem(id) {
 
 
 /* =========================
-   이상한사탕 포켓몬 선택
+   이상한사탕 선택
 ========================= */
 
 function showRareCandySelector() {
@@ -2063,27 +2332,31 @@ function showRareCandySelector() {
   const pokemonList =
     state.monsters
       .map(
-        pokemon => `
+        pokemon => {
 
-          <button
-            class="learn-move"
-            data-monster-id="${pokemon.id}"
-          >
+          return `
 
-            <b>
-              ${pokemon.name}
-              Lv.${pokemon.level}
-            </b>
+            <button
+              class="learn-move"
+              data-monster-id="${pokemon.id}"
+            >
 
-            <span>
-              이상한사탕 사용
-              →
-              Lv.${pokemon.level + 1}
-            </span>
+              <b>
+                ${pokemon.name}
+                Lv.${pokemon.level}
+              </b>
 
-          </button>
+              <span>
+                이상한사탕 사용
+                →
+                Lv.${pokemon.level + 1}
+              </span>
 
-        `
+            </button>
+
+          `;
+
+        }
       )
       .join("");
 
@@ -2142,7 +2415,8 @@ function showRareCandySelector() {
           x =>
             String(x.id) ===
             String(
-              pokemonButton.dataset.monsterId
+              pokemonButton.dataset
+                .monsterId
             )
         );
 
@@ -2160,7 +2434,7 @@ function showRareCandySelector() {
 
 
         toast(
-          "갖고 있는 사탕이 없다."
+          "갖고 있는 사탕이 없다.."
         );
 
 
@@ -2240,7 +2514,6 @@ function buyItem(id) {
       "돈이 부족합니다."
     );
 
-
     return;
 
   }
@@ -2283,57 +2556,32 @@ function renderMembers() {
   list.innerHTML =
     members
       .map(
-        member => {
+        member => `
 
-          const isMyProfile =
-            String(
-              member.trainerNumber
-            ) ===
-            String(
-              currentTrainerNumber
-            );
+          <button
+            class="member"
+            data-id="${member.id}"
+          >
 
+            <div class="portrait">
+              👤
+            </div>
 
-          return `
+            <div class="info">
 
-            <button
-              class="member"
-              data-id="${member.id}"
-            >
+              <h3>
+                ${member.name}
+              </h3>
 
-              <div class="portrait">
-                👤
-              </div>
+              <p>
+                ${member.role}
+              </p>
 
-              <div class="info">
+            </div>
 
-                <h3>
+          </button>
 
-                  ${member.name}
-
-                  ${
-                    isMyProfile
-                      ? `
-                        <span class="my-profile">
-                          내 프로필
-                        </span>
-                      `
-                      : ""
-                  }
-
-                </h3>
-
-                <p>
-                  ${member.role}
-                </p>
-
-              </div>
-
-            </button>
-
-          `;
-
-        }
+        `
       )
       .join("");
 
@@ -2358,9 +2606,7 @@ function renderBag() {
 
 
   list.innerHTML =
-    Object.entries(
-      items
-    )
+    Object.entries(items)
       .map(
         ([id, item]) => `
 
@@ -2459,16 +2705,13 @@ function renderShop() {
 
   specialPrice.textContent =
     Math.floor(
-      specialItem.price *
-      0.7
+      specialItem.price * 0.7
     ).toLocaleString() +
     " G";
 
 
   shopList.innerHTML =
-    Object.entries(
-      items
-    )
+    Object.entries(items)
       .map(
         ([id, item]) => `
 
@@ -2486,7 +2729,8 @@ function renderShop() {
 
               <span>
                 ${item.price.toLocaleString()}
-                G ·
+                G
+                ·
                 ${item.desc}
               </span>
 
@@ -2559,8 +2803,7 @@ function renderMap() {
 
   if (!state.encounter) {
 
-    encounter.innerHTML =
-      "";
+    encounter.innerHTML = "";
 
     return;
 
@@ -2626,4 +2869,7 @@ function render() {
    시작
 ========================= */
 
-checkLogin();
+/*
+  실제 시작은 DOMContentLoaded에서
+  checkLogin()으로 처리한다.
+*/
