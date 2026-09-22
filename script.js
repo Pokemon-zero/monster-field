@@ -15,7 +15,6 @@ const defaultState={
 let state=
   JSON.parse(localStorage.getItem("monsterGame")||"null")
   ||defaultState;
-```js
 
 /* 기술 데이터 */
 
@@ -694,8 +693,6 @@ function catchMonster(){
 
 }
 
-
-```js
 /* 포켓몬 목록 */
 
 function renderMonsters(){
