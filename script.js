@@ -1,3 +1,15 @@
+const SUPABASE_URL =
+  "https://zjaylououskihlejjasa.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_-a_siX-BtZ5auQudGrhkCA_nMG4MrhN";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
 const defaultState = {
   money: 1000,
 
