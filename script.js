@@ -15,7 +15,39 @@ const defaultState={
 let state=
   JSON.parse(localStorage.getItem("monsterGame")||"null")
   ||defaultState;
+```js
 
+/* 기술 데이터 */
+
+const moveData={
+
+  꼬렛:[
+    {
+      name:"몸통박치기",
+      learnLevel:1,
+      power:35,
+      accuracy:95,
+      pp:35
+    },
+
+    {
+      name:"꼬리흔들기",
+      learnLevel:1,
+      power:null,
+      accuracy:100,
+      pp:30
+    },
+
+    {
+      name:"전광석화",
+      learnLevel:7,
+      power:40,
+      accuracy:100,
+      pp:30
+    }
+  ]
+
+};
 
 /* 예전 저장 데이터와의 호환 */
 
@@ -663,6 +695,7 @@ function catchMonster(){
 }
 
 
+```js
 /* 포켓몬 목록 */
 
 function renderMonsters(){
@@ -711,14 +744,51 @@ function renderMonsters(){
   list.innerHTML=
     state.monsters.map(m=>{
 
-      const hpPercent=
-        Math.max(
-          0,
-          Math.min(
-            100,
-            (m.hp/m.maxHp)*100
-          )
-        );
+      /*
+        현재 장착한 기술
+        최대 4개
+      */
+
+      const moves=
+        Array.isArray(m.moves)
+          ? m.moves
+          : [];
+
+
+      const slots=
+        [0,1,2,3].map(i=>{
+
+          const move=
+            moves[i];
+
+
+          if(!move){
+
+            return`
+
+              <div class="move-slot empty">
+                기술 없음
+              </div>
+
+            `;
+
+          }
+
+
+          return`
+
+            <div
+              class="move-slot"
+              data-move-index="${i}"
+            >
+
+              ${move.name}
+
+            </div>
+
+          `;
+
+        }).join("");
 
 
       return`
@@ -738,16 +808,10 @@ function renderMonsters(){
               Lv.${m.level} · ${m.type} 타입
             </p>
 
-            <p>
-              HP ${m.hp} / ${m.maxHp}
-            </p>
 
-            <div class="hp-bar">
+            <div class="monster-moves">
 
-              <div
-                class="hp-fill"
-                style="width:${hpPercent}%"
-              ></div>
+              ${slots}
 
             </div>
 
