@@ -1,234 +1,280 @@
-const defaultState={
-  money:1000,
-  inventory:{
-    potion:2,
-    ball:3,
-    herb:0
+const defaultState = {
+  money: 1000,
+
+  inventory: {
+    potion: 2,
+    ball: 3,
+    herb: 0
   },
-  area:"푸른 숲",
-  encounter:null,
-  monsters:[],
-  exploreCount:0,
-  exploreDate:""
+
+  area: "푸른 숲",
+
+  encounter: null,
+
+  monsters: [],
+
+  exploreCount: 0,
+
+  exploreDate: ""
 };
 
-let state=
-  JSON.parse(localStorage.getItem("monsterGame")||"null")
-  ||defaultState;
 
-/* 기술 데이터 */
+let state =
+  JSON.parse(
+    localStorage.getItem("monsterGame") || "null"
+  ) || defaultState;
 
-const moveData={
 
-  꼬렛:[
+/* =========================
+   기술 데이터
+========================= */
+
+const moveData = {
+
+  꼬렛: [
+
     {
-      name:"몸통박치기",
-      learnLevel:1,
-      power:35,
-      accuracy:95,
-      pp:35
+      name: "몸통박치기",
+      learnLevel: 1,
+      power: 35,
+      accuracy: 95,
+      pp: 35
     },
 
     {
-      name:"꼬리흔들기",
-      learnLevel:1,
-      power:null,
-      accuracy:100,
-      pp:30
+      name: "꼬리흔들기",
+      learnLevel: 1,
+      power: null,
+      accuracy: 100,
+      pp: 30
     },
 
     {
-      name:"전광석화",
-      learnLevel:7,
-      power:40,
-      accuracy:100,
-      pp:30
+      name: "전광석화",
+      learnLevel: 7,
+      power: 40,
+      accuracy: 100,
+      pp: 30
     }
+
   ]
 
 };
 
-/* 예전 저장 데이터와의 호환 */
 
-if(!state.inventory){
-  state.inventory={
-    potion:2,
-    ball:3,
-    herb:0
+/* =========================
+   예전 저장 데이터와 호환
+========================= */
+
+if (!state.inventory) {
+
+  state.inventory = {
+    potion: 2,
+    ball: 3,
+    herb: 0
   };
-}
 
-if(state.inventory.potion===undefined){
-  state.inventory.potion=2;
-}
-
-if(state.inventory.ball===undefined){
-  state.inventory.ball=3;
-}
-
-if(state.inventory.herb===undefined){
-  state.inventory.herb=0;
-}
-
-if(!state.area){
-  state.area="푸른 숲";
-}
-
-if(!Array.isArray(state.monsters)){
-  state.monsters=[];
-}
-
-if(state.encounter===undefined){
-  state.encounter=null;
-}
-
-if(state.exploreCount===undefined){
-  state.exploreCount=0;
-}
-
-if(state.exploreDate===undefined){
-  state.exploreDate="";
 }
 
 
-/* 멤버 */
+if (state.inventory.potion === undefined) {
+  state.inventory.potion = 2;
+}
 
-const members=[
+
+if (state.inventory.ball === undefined) {
+  state.inventory.ball = 3;
+}
+
+
+if (state.inventory.herb === undefined) {
+  state.inventory.herb = 0;
+}
+
+
+if (!state.area) {
+  state.area = "푸른 숲";
+}
+
+
+if (!Array.isArray(state.monsters)) {
+  state.monsters = [];
+}
+
+
+if (state.encounter === undefined) {
+  state.encounter = null;
+}
+
+
+if (state.exploreCount === undefined) {
+  state.exploreCount = 0;
+}
+
+
+if (state.exploreDate === undefined) {
+  state.exploreDate = "";
+}
+
+
+/* =========================
+   멤버
+========================= */
+
+const members = [
+
   {
-    id:1,
-    name:"풀잎",
-    role:"초보 트레이너",
-    desc:"가자 포켓몬 마스터!"
+    id: 1,
+    name: "풀잎",
+    role: "초보 트레이너",
+    desc: "가자 포켓몬 마스터!"
   },
+
   {
-    id:2,
-    name:"초코",
-    role:"초보 트레이너",
-    desc:"용돈 부모님한테 받으면 안돼?"
+    id: 2,
+    name: "초코",
+    role: "초보 트레이너",
+    desc: "용돈 부모님한테 받으면 안돼?"
   },
+
   {
-    id:3,
-    name:"미르",
-    role:"초보 트레이너",
-    desc:"드래곤 타입 전문가가 목표입니다."
+    id: 3,
+    name: "미르",
+    role: "초보 트레이너",
+    desc: "드래곤 타입 전문가가 목표입니다."
   },
+
   {
-    id:4,
-    name:"보석",
-    role:"초보 트레이너",
-    desc:"내가 잘해야..."
+    id: 4,
+    name: "보석",
+    role: "초보 트레이너",
+    desc: "내가 잘해야..."
   }
+
 ];
 
 
-/* 아이템 */
+/* =========================
+   아이템
+========================= */
 
-const items={
+const items = {
 
-  potion:{
-    name:"상처약",
-    icon:"🧪",
-    price:200,
-    desc:"HP를 조금 회복한다."
+  potion: {
+    name: "상처약",
+    icon: "🧪",
+    price: 200,
+    desc: "HP를 조금 회복한다."
   },
 
-  ball:{
-    name:"몬스터볼",
-    icon:"🔴",
-    price:100,
-    desc:"야생 포켓몬을 포획할 때 사용한다."
+  ball: {
+    name: "몬스터볼",
+    icon: "🔴",
+    price: 100,
+    desc: "야생 포켓몬을 포획할 때 사용한다."
   },
 
-  herb:{
-    name:"오랭열매",
-    icon:"🌿",
-    price:80,
-    desc:"탐험 중 발견한 오랭열매."
+  herb: {
+    name: "오랭열매",
+    icon: "🌿",
+    price: 80,
+    desc: "탐험 중 발견한 오랭열매."
   }
 
 };
 
 
-/* 야생 포켓몬 */
+/* =========================
+   야생 포켓몬
+========================= */
 
-const monsters=[
+const monsters = [
 
   {
-    name:"구구",
-    type:"노말, 비행",
-    minLevel:2,
-    maxLevel:5,
-    baseHp:30,
-    catchRate:.75
+    name: "구구",
+    type: "노말, 비행",
+    minLevel: 2,
+    maxLevel: 5,
+    baseHp: 30,
+    catchRate: 0.75
   },
 
   {
-    name:"꼬렛",
-    type:"노말",
-    minLevel:2,
-    maxLevel:6,
-    baseHp:35,
-    catchRate:.65
+    name: "꼬렛",
+    type: "노말",
+    minLevel: 2,
+    maxLevel: 6,
+    baseHp: 35,
+    catchRate: 0.65
   },
 
   {
-    name:"꼬리선",
-    type:"노말",
-    minLevel:3,
-    maxLevel:7,
-    baseHp:32,
-    catchRate:.55
+    name: "꼬리선",
+    type: "노말",
+    minLevel: 3,
+    maxLevel: 7,
+    baseHp: 32,
+    catchRate: 0.55
   },
 
   {
-    name:"피콘",
-    type:"벌레",
-    minLevel:1,
-    maxLevel:5,
-    baseHp:42,
-    catchRate:.8
+    name: "피콘",
+    type: "벌레",
+    minLevel: 1,
+    maxLevel: 5,
+    baseHp: 42,
+    catchRate: 0.8
   },
 
   {
-    name:"포챠냐",
-    type:"악",
-    minLevel:5,
-    maxLevel:10,
-    baseHp:45,
-    catchRate:.3
+    name: "포챠냐",
+    type: "악",
+    minLevel: 5,
+    maxLevel: 10,
+    baseHp: 45,
+    catchRate: 0.3
   }
 
 ];
 
 
-/* 날짜 확인 */
+/* =========================
+   날짜 확인
+========================= */
 
-function checkExploreDay(){
+function checkExploreDay() {
 
-  const now=new Date();
+  const now = new Date();
 
-  const today=
-    now.getFullYear()+"-"+
-    String(now.getMonth()+1).padStart(2,"0")+"-"+
-    String(now.getDate()).padStart(2,"0");
+  const today =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0");
 
-  if(state.exploreDate!==today){
 
-    state.exploreDate=today;
-    state.exploreCount=0;
+  if (state.exploreDate !== today) {
+
+    state.exploreDate = today;
+
+    state.exploreCount = 0;
 
     localStorage.setItem(
       "monsterGame",
       JSON.stringify(state)
     );
+
   }
 
 }
 
 
-/* 저장 */
+/* =========================
+   저장
+========================= */
 
-function save(){
+function save() {
 
   localStorage.setItem(
     "monsterGame",
@@ -240,16 +286,18 @@ function save(){
 }
 
 
-/* 돈 */
+/* =========================
+   돈
+========================= */
 
-function money(){
+function money() {
 
-  const element=
+  const element =
     document.getElementById("money");
 
-  if(element){
+  if (element) {
 
-    element.textContent=
+    element.textContent =
       state.money.toLocaleString();
 
   }
@@ -257,205 +305,255 @@ function money(){
 }
 
 
-/* 알림 */
+/* =========================
+   알림
+========================= */
 
-function toast(t){
+function toast(t) {
 
-  const element=
+  const element =
     document.getElementById("toast");
 
-  if(!element){
+  if (!element) {
     return;
   }
 
-  element.textContent=t;
+  element.textContent = t;
 
   element.classList.add("show");
 
-  setTimeout(()=>{
+  setTimeout(() => {
+
     element.classList.remove("show");
-  },1800);
+
+  }, 1800);
 
 }
 
 
-/* 페이지 이동 */
+/* =========================
+   페이지 이동
+========================= */
 
-function go(page){
+function go(page) {
 
   document.querySelectorAll(".page")
-    .forEach(x=>{
+    .forEach(x => {
+
       x.classList.remove("active");
+
     });
 
-  const target=
+
+  const target =
     document.getElementById(page);
 
-  if(target){
+
+  if (target) {
+
     target.classList.add("active");
+
   }
 
+
   document.querySelectorAll("nav button")
-    .forEach(x=>{
+    .forEach(x => {
 
       x.classList.toggle(
         "active",
-        x.dataset.page===page
+        x.dataset.page === page
       );
 
     });
+
 
   render();
 
 }
 
 
-/* 클릭 처리 */
+/* =========================
+   클릭 처리
+========================= */
 
-document.addEventListener("click",e=>{
+document.addEventListener("click", e => {
+
 
   /* 페이지 이동 */
 
-  const pageButton=
+  const pageButton =
     e.target.closest("[data-page]");
 
-  if(pageButton){
+
+  if (pageButton) {
 
     go(pageButton.dataset.page);
 
     return;
+
   }
 
 
   /* 멤버 클릭 */
 
-  const member=
+  const member =
     e.target.closest(".member");
 
-  if(member){
+
+  if (member) {
 
     showProfile(
       Number(member.dataset.id)
     );
 
     return;
+
   }
 
 
   /* 포켓몬 클릭 */
 
-  const monsterButton=
+  const monsterButton =
     e.target.closest("[data-monster-id]");
 
-  if(monsterButton){
+
+  if (monsterButton) {
 
     showMonsterDetail(
       monsterButton.dataset.monsterId
     );
 
     return;
+
   }
 
 
   /* 지도 */
 
-  const mapPoint=
+  const mapPoint =
     e.target.closest(".map-point");
 
-  if(mapPoint){
 
-    state.area=
+  if (mapPoint) {
+
+    state.area =
       mapPoint.dataset.area;
 
-    state.encounter=null;
+    state.encounter = null;
 
     save();
 
     toast(
-      state.area+"로 이동했습니다."
+      state.area + "로 이동했습니다."
     );
 
     return;
+
   }
 
 
   /* 탐색 */
 
-  if(e.target.id==="explore-btn"){
+  if (e.target.id === "explore-btn") {
 
     explore();
 
     return;
+
   }
 
 
   /* 아이템 구매 */
 
-  const buy=
+  const buy =
     e.target.closest("[data-buy]");
 
-  if(buy){
+
+  if (buy) {
 
     buyItem(buy.dataset.buy);
 
     return;
+
   }
 
 
   /* 아이템 사용 */
 
-  const use=
+  const use =
     e.target.closest("[data-use]");
 
-  if(use){
+
+  if (use) {
 
     useItem(use.dataset.use);
 
     return;
+
   }
 
 
   /* 도망 */
 
-  if(e.target.id==="run-away"){
+  if (e.target.id === "run-away") {
 
-    state.encounter=null;
+    state.encounter = null;
 
     save();
 
     toast("무사히 도망쳤다.");
 
     return;
+
   }
 
 
   /* 포획 */
 
-  if(e.target.id==="catch"){
+  if (e.target.id === "catch") {
 
     catchMonster();
 
     return;
+
+  }
+
+
+  /* 빈 기술 슬롯 */
+
+  const emptyMove =
+    e.target.closest(".move-slot.empty");
+
+
+  if (emptyMove) {
+
+    e.stopPropagation();
+
+    return;
+
   }
 
 });
 
 
-/* 멤버 상세 */
+/* =========================
+   멤버 상세
+========================= */
 
-function showProfile(id){
+function showProfile(id) {
 
-  const member=
-    members.find(x=>x.id===id);
+  const member =
+    members.find(x => x.id === id);
 
-  if(!member){
+
+  if (!member) {
     return;
   }
 
 
   document.getElementById(
     "profile-content"
-  ).innerHTML=`
+  ).innerHTML = `
 
     <div class="profile-card">
 
@@ -475,33 +573,106 @@ function showProfile(id){
 
   `;
 
+
   go("profile");
 
 }
 
 
-/* 야생 포켓몬 생성 */
+/* =========================
+   포켓몬에게 배울 수 있는 기술
+========================= */
 
-function createWildMonster(){
+function getLearnableMoves(pokemon) {
 
-  const base=
+  const data =
+    moveData[pokemon.name] || [];
+
+
+  return data.filter(move => {
+
+    return move.learnLevel <= pokemon.level;
+
+  });
+
+}
+
+
+/* =========================
+   레벨에 맞는 기술 자동 습득
+========================= */
+
+function giveInitialMoves(pokemon) {
+
+  const learnable =
+    getLearnableMoves(pokemon);
+
+
+  if (!Array.isArray(pokemon.moves)) {
+
+    pokemon.moves = [];
+
+  }
+
+
+  learnable.forEach(move => {
+
+    if (pokemon.moves.length >= 4) {
+      return;
+    }
+
+
+    const alreadyHas =
+      pokemon.moves.some(
+        x => x.name === move.name
+      );
+
+
+    if (!alreadyHas) {
+
+      pokemon.moves.push({
+        name: move.name,
+        learnLevel: move.learnLevel,
+        power: move.power,
+        accuracy: move.accuracy,
+        pp: move.pp
+      });
+
+    }
+
+  });
+
+}
+
+
+/* =========================
+   야생 포켓몬 생성
+========================= */
+
+function createWildMonster() {
+
+  const base =
     monsters[
       Math.floor(
-        Math.random()*monsters.length
+        Math.random() * monsters.length
       )
     ];
 
-  const level=
+
+  const level =
     Math.floor(
-      Math.random()*
-      (base.maxLevel-base.minLevel+1)
-    )
-    +base.minLevel;
+      Math.random() *
+      (base.maxLevel - base.minLevel + 1)
+    ) +
+    base.minLevel;
 
-  const maxHp=
-    base.baseHp+(level*3);
 
-  return{
+  const maxHp =
+    base.baseHp +
+    (level * 3);
+
+
+  return {
 
     ...base,
 
@@ -509,59 +680,57 @@ function createWildMonster(){
 
     maxHp,
 
-    hp:maxHp
+    hp: maxHp
 
   };
 
 }
 
 
-/* 탐색 */
+/* =========================
+   탐색
+========================= */
 
-function explore(){
+function explore() {
 
   checkExploreDay();
 
-  if(state.exploreCount>=10){
+
+  if (state.exploreCount >= 10) {
 
     toast(
       "오늘은 더 이상 탐색할 수 없습니다."
     );
 
     return;
+
   }
 
-
-  /* 탐색 횟수 증가 */
 
   state.exploreCount++;
 
 
-  /* 화면에 탐색 횟수 바로 표시 */
-
-  const exploreCount=
+  const exploreCount =
     document.getElementById(
       "explore-count"
     );
 
-  if(exploreCount){
 
-    exploreCount.textContent=
+  if (exploreCount) {
+
+    exploreCount.textContent =
       `오늘의 탐색 ${state.exploreCount} / 10회`;
 
   }
 
 
-  /*
-    10% 확률:
-    포켓몬을 만나지 못하고 100G 획득
-  */
+  /* 10% 확률로 포켓몬을 만나지 않음 */
 
-  if(Math.random()<0.1){
+  if (Math.random() < 0.1) {
 
-    state.money+=100;
+    state.money += 100;
 
-    state.encounter=null;
+    state.encounter = null;
 
     save();
 
@@ -570,21 +739,19 @@ function explore(){
     );
 
     return;
+
   }
 
 
   /* 포켓몬을 만남 */
 
-  state.encounter=
+  state.encounter =
     createWildMonster();
 
 
-  /*
-    40% 확률:
-    오랭열매도 같이 발견
-  */
+  /* 40% 확률로 오랭열매 발견 */
 
-  if(Math.random()<0.4){
+  if (Math.random() < 0.4) {
 
     state.inventory.herb++;
 
@@ -608,46 +775,52 @@ function explore(){
 }
 
 
-/* 포획 */
+/* =========================
+   포획
+========================= */
 
-function catchMonster(){
+function catchMonster() {
 
-  if(!state.encounter){
+  if (!state.encounter) {
 
     toast(
       "포획할 포켓몬이 없습니다."
     );
 
     return;
+
   }
 
 
-  if(!state.inventory.ball){
+  if (!state.inventory.ball) {
 
     toast(
       "몬스터볼이 없습니다!"
     );
 
     return;
+
   }
 
 
-  const wild=
+  const wild =
     state.encounter;
+
 
   state.inventory.ball--;
 
 
-  const success=
-    Math.random()<wild.catchRate;
+  const success =
+    Math.random() < wild.catchRate;
 
 
-  if(success){
+  if (success) {
 
-    const caught={
+    const caught = {
 
       id:
-        Date.now()+Math.random(),
+        Date.now() +
+        Math.random(),
 
       name:
         wild.name,
@@ -662,26 +835,38 @@ function catchMonster(){
         wild.maxHp,
 
       maxHp:
-        wild.maxHp
+        wild.maxHp,
+
+      moves: []
 
     };
+
+
+    /* 포획한 순간 배울 수 있는 기술 자동 습득 */
+
+    giveInitialMoves(caught);
 
 
     state.monsters.push(
       caught
     );
 
-    state.encounter=null;
+
+    state.encounter = null;
+
 
     save();
+
 
     toast(
       `${caught.name} Lv.${caught.level}을/를 잡았다!`
     );
 
-  }else{
+  }
 
-    state.encounter=null;
+  else {
+
+    state.encounter = null;
 
     save();
 
@@ -693,23 +878,27 @@ function catchMonster(){
 
 }
 
-/* 포켓몬 목록 */
 
-function renderMonsters(){
+/* =========================
+   포켓몬 목록
+========================= */
 
-  const list=
+function renderMonsters() {
+
+  const list =
     document.getElementById(
       "monster-list"
     );
 
-  if(!list){
+
+  if (!list) {
     return;
   }
 
 
-  if(!state.monsters.length){
+  if (!state.monsters.length) {
 
-    list.innerHTML=`
+    list.innerHTML = `
 
       <div class="empty-monsters">
 
@@ -735,60 +924,71 @@ function renderMonsters(){
     `;
 
     return;
+
   }
 
 
-  list.innerHTML=
-    state.monsters.map(m=>{
+  list.innerHTML =
+    state.monsters.map(m => {
 
-      /*
-        현재 장착한 기술
-        최대 4개
-      */
 
-      const moves=
+      /* 예전에 잡은 포켓몬에게 moves가 없을 경우 */
+
+      if (!Array.isArray(m.moves)) {
+
+        m.moves = [];
+
+      }
+
+
+      /* 현재 레벨에서 배울 수 있는 기술 중
+         아직 배우지 않은 기술 자동 추가 */
+
+      giveInitialMoves(m);
+
+
+      const moves =
         Array.isArray(m.moves)
           ? m.moves
           : [];
 
 
-      const slots=
-        [0,1,2,3].map(i=>{
+      const slots =
+        [0, 1, 2, 3]
+          .map(i => {
 
-          const move=
-            moves[i];
+            const move =
+              moves[i];
 
 
-          if(!move){
+            if (!move) {
 
-            return`
+              return `
 
-              <div class="move-slot empty">
-                기술 없음
+                <div class="move-slot empty">
+                  기술 없음
+                </div>
+
+              `;
+
+            }
+
+
+            return `
+
+              <div class="move-slot">
+
+                ${move.name}
+
               </div>
 
             `;
 
-          }
+          })
+          .join("");
 
 
-          return`
-
-            <div
-              class="move-slot"
-              data-move-index="${i}"
-            >
-
-              ${move.name}
-
-            </div>
-
-          `;
-
-        }).join("");
-
-
-      return`
+      return `
 
         <button
           class="monster-card"
@@ -805,7 +1005,6 @@ function renderMonsters(){
               Lv.${m.level} · ${m.type} 타입
             </p>
 
-
             <div class="monster-moves">
 
               ${slots}
@@ -820,26 +1019,103 @@ function renderMonsters(){
 
     }).join("");
 
+
+  /* 기술 자동 추가가 있었다면 저장 */
+
+  localStorage.setItem(
+    "monsterGame",
+    JSON.stringify(state)
+  );
+
 }
 
 
-/* 포켓몬 상세 */
+/* =========================
+   포켓몬 상세
+========================= */
 
-function showMonsterDetail(id){
+function showMonsterDetail(id) {
 
-  const pokemon=
+  const pokemon =
     state.monsters.find(
-      x=>String(x.id)===String(id)
+      x => String(x.id) === String(id)
     );
 
-  if(!pokemon){
+
+  if (!pokemon) {
     return;
+  }
+
+
+  if (!Array.isArray(pokemon.moves)) {
+
+    pokemon.moves = [];
+
+  }
+
+
+  /* 현재 레벨에서 배울 수 있는 기술 확인 */
+
+  giveInitialMoves(pokemon);
+
+
+  const moves =
+    pokemon.moves;
+
+
+  let moveHTML = "";
+
+
+  if (!moves.length) {
+
+    moveHTML = `
+
+      <div class="detail-stat">
+
+        <small>
+          기술
+        </small>
+
+        <b>
+          아직 없음
+        </b>
+
+      </div>
+
+    `;
+
+  }
+
+  else {
+
+    moveHTML = moves.map(move => `
+
+      <div class="detail-stat">
+
+        <small>
+          기술
+        </small>
+
+        <b>
+          ${move.name}
+        </b>
+
+        <span>
+          위력 ${move.power === null ? "-" : move.power}
+          · 명중 ${move.accuracy}%
+          · PP ${move.pp}
+        </span>
+
+      </div>
+
+    `).join("");
+
   }
 
 
   document.getElementById(
     "monster-detail-content"
-  ).innerHTML=`
+  ).innerHTML = `
 
     <div class="monster-detail-card">
 
@@ -888,30 +1164,7 @@ function showMonsterDetail(id){
 
       <div class="detail-stats">
 
-        <div class="detail-stat">
-
-          <small>
-            기술
-          </small>
-
-          <b>
-            아직 없음
-          </b>
-
-        </div>
-
-
-        <div class="detail-stat">
-
-          <small>
-            상태
-          </small>
-
-          <b>
-            정상
-          </b>
-
-        </div>
+        ${moveHTML}
 
       </div>
 
@@ -920,31 +1173,35 @@ function showMonsterDetail(id){
   `;
 
 
+  localStorage.setItem(
+    "monsterGame",
+    JSON.stringify(state)
+  );
+
+
   go("monster-detail");
 
 }
 
 
-/* 아이템 사용 */
+/* =========================
+   아이템 사용
+========================= */
 
-function useItem(id){
+function useItem(id) {
 
-  if(!state.inventory[id]){
+  if (!state.inventory[id]) {
 
     toast(
       "아이템이 없습니다."
     );
 
     return;
+
   }
 
 
-  if(id==="potion"){
-
-    /*
-      현재는 포켓몬 선택 회복 시스템이
-      아직 없으므로 수량만 감소
-    */
+  if (id === "potion") {
 
     state.inventory.potion--;
 
@@ -955,6 +1212,7 @@ function useItem(id){
     );
 
     return;
+
   }
 
 
@@ -965,33 +1223,39 @@ function useItem(id){
 }
 
 
-/* 상점 구매 */
+/* =========================
+   상점 구매
+========================= */
 
-function buyItem(id){
+function buyItem(id) {
 
-  const item=
+  const item =
     items[id];
 
-  if(!item){
+
+  if (!item) {
     return;
   }
 
 
-  if(state.money<item.price){
+  if (state.money < item.price) {
 
     toast(
       "돈이 부족합니다."
     );
 
     return;
+
   }
 
 
-  state.money-=item.price;
+  state.money -= item.price;
 
   state.inventory[id]++;
 
+
   save();
+
 
   toast(
     `${item.name}을 구매했습니다.`
@@ -1000,22 +1264,25 @@ function buyItem(id){
 }
 
 
-/* 멤버 목록 */
+/* =========================
+   멤버 목록
+========================= */
 
-function renderMembers(){
+function renderMembers() {
 
-  const list=
+  const list =
     document.getElementById(
       "member-list"
     );
 
-  if(!list){
+
+  if (!list) {
     return;
   }
 
 
-  list.innerHTML=
-    members.map(member=>`
+  list.innerHTML =
+    members.map(member => `
 
       <button
         class="member"
@@ -1045,23 +1312,26 @@ function renderMembers(){
 }
 
 
-/* 가방 */
+/* =========================
+   가방
+========================= */
 
-function renderBag(){
+function renderBag() {
 
-  const list=
+  const list =
     document.getElementById(
       "bag-list"
     );
 
-  if(!list){
+
+  if (!list) {
     return;
   }
 
 
-  list.innerHTML=
+  list.innerHTML =
     Object.entries(items)
-      .map(([id,item])=>`
+      .map(([id, item]) => `
 
         <div class="item">
 
@@ -1074,7 +1344,7 @@ function renderBag(){
 
             <b>
               ${item.name} ×
-              ${state.inventory[id]||0}
+              ${state.inventory[id] || 0}
             </b>
 
             <span>
@@ -1099,63 +1369,69 @@ function renderBag(){
 }
 
 
-/* 상점 */
+/* =========================
+   상점
+========================= */
 
-function renderShop(){
+function renderShop() {
 
-  const specialName=
+  const specialName =
     document.getElementById(
       "special-name"
     );
 
-  const specialPrice=
+
+  const specialPrice =
     document.getElementById(
       "special-price"
     );
 
-  const shopList=
+
+  const shopList =
     document.getElementById(
       "shop-list"
     );
 
 
-  if(
+  if (
     !specialName ||
     !specialPrice ||
     !shopList
-  ){
+  ) {
+
     return;
+
   }
 
 
-  const day=
+  const day =
     new Date().getDate();
 
 
-  const special=
-    ["potion","ball","herb"][
-      day%3
+  const special =
+    ["potion", "ball", "herb"][
+      day % 3
     ];
 
 
-  const specialItem=
+  const specialItem =
     items[special];
 
 
-  specialName.textContent=
+  specialName.textContent =
     specialItem.name;
 
 
-  specialPrice.textContent=
+  specialPrice.textContent =
     Math.floor(
-      specialItem.price*.7
-    ).toLocaleString()
-    +" G";
+      specialItem.price * 0.7
+    ).toLocaleString() +
+    " G";
 
 
-  shopList.innerHTML=
+  shopList.innerHTML =
     Object.entries(items)
-      .map(([id,item])=>`
+      .map(([id, item]) => `
 
         <div class="shop-item">
 
@@ -1193,21 +1469,25 @@ function renderShop(){
 }
 
 
-/* 지도 */
+/* =========================
+   지도
+========================= */
 
-function renderMap(){
+function renderMap() {
 
-  const area=
+  const area =
     document.getElementById(
       "current-area"
     );
 
-  const exploreCount=
+
+  const exploreCount =
     document.getElementById(
       "explore-count"
     );
 
-  const encounter=
+
+  const encounter =
     document.getElementById(
       "encounter"
     );
@@ -1216,38 +1496,37 @@ function renderMap(){
   checkExploreDay();
 
 
-  if(!area || !encounter){
+  if (!area || !encounter) {
     return;
   }
 
 
-  area.textContent=
+  area.textContent =
     state.area;
 
 
-  /* 탐색 횟수 표시 */
+  if (exploreCount) {
 
-  if(exploreCount){
-
-    exploreCount.textContent=
+    exploreCount.textContent =
       `오늘의 탐색 ${state.exploreCount} / 10회`;
 
   }
 
 
-  if(!state.encounter){
+  if (!state.encounter) {
 
-    encounter.innerHTML="";
+    encounter.innerHTML = "";
 
     return;
+
   }
 
 
-  const pokemon=
+  const pokemon =
     state.encounter;
 
 
-  encounter.innerHTML=`
+  encounter.innerHTML = `
 
     <div class="encounter-card">
 
@@ -1283,9 +1562,11 @@ function renderMap(){
 }
 
 
-/* 전체 렌더링 */
+/* =========================
+   전체 렌더링
+========================= */
 
-function render(){
+function render() {
 
   money();
 
@@ -1302,6 +1583,8 @@ function render(){
 }
 
 
-/* 시작 */
+/* =========================
+   시작
+========================= */
 
 render();
