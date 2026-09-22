@@ -374,18 +374,19 @@ async function login() {
     );
 
 
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.signInWithPassword({
+ const loginEmail = `${email}@pokemon-zero.com`;
 
-      email: email,
+const {
+  data,
+  error
+} =
+  await supabaseClient.auth.signInWithPassword({
 
-      password: password
+    email: loginEmail,
 
-    });
+    password: password
 
+  });
 
   if (error) {
 
