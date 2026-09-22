@@ -1,4 +1,3 @@
-```html
 <!doctype html>
 <html lang="ko">
 
@@ -18,6 +17,192 @@
     href="style.css"
   >
 
+  <!-- Supabase -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <style>
+
+    /* =========================
+       로그인 화면
+    ========================= */
+
+    #login-screen {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 9999;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      min-height: 100vh;
+
+      padding: 20px;
+
+      box-sizing: border-box;
+
+      background:
+        linear-gradient(
+          135deg,
+          #f5f7ff,
+          #eef6ff
+        );
+
+    }
+
+
+    #login-screen.hidden {
+
+      display: none;
+
+    }
+
+
+    .login-card {
+
+      width: 100%;
+
+      max-width: 380px;
+
+      box-sizing: border-box;
+
+      padding: 36px 30px;
+
+      background: white;
+
+      border-radius: 24px;
+
+      box-shadow:
+        0 20px 60px
+        rgba(0, 0, 0, 0.12);
+
+      text-align: center;
+
+    }
+
+
+    .login-logo {
+
+      font-size: 28px;
+
+      font-weight: 800;
+
+      margin-bottom: 8px;
+
+    }
+
+
+    .login-card h1 {
+
+      margin: 20px 0 8px;
+
+      font-size: 24px;
+
+    }
+
+
+    .login-card p {
+
+      margin: 0 0 24px;
+
+      color: #777;
+
+      font-size: 14px;
+
+      line-height: 1.5;
+
+    }
+
+
+    .login-input {
+
+      width: 100%;
+
+      box-sizing: border-box;
+
+      padding: 14px 15px;
+
+      margin-bottom: 12px;
+
+      border: 1px solid #ddd;
+
+      border-radius: 12px;
+
+      font-size: 16px;
+
+      outline: none;
+
+    }
+
+
+    .login-input:focus {
+
+      border-color: #777;
+
+    }
+
+
+    #login-btn {
+
+      width: 100%;
+
+      margin-top: 6px;
+
+      padding: 14px;
+
+      border: 0;
+
+      border-radius: 12px;
+
+      font-size: 16px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+    }
+
+
+    #login-message {
+
+      min-height: 20px;
+
+      margin-top: 14px;
+
+      color: #e05252;
+
+      font-size: 13px;
+
+    }
+
+
+    /* =========================
+       로그인 전 게임 숨김
+    ========================= */
+
+    body:not(.logged-in) #app {
+
+      display: none;
+
+    }
+
+
+    body.logged-in #login-screen {
+
+      display: none;
+
+    }
+
+
+  </style>
+
 </head>
 
 
@@ -25,32 +210,40 @@
 
 
 <!-- =========================
-     로그인
+     로그인 화면
 ========================= -->
 
 <div id="login-screen">
 
-  <div class="login-box">
+  <div class="login-card">
 
-    <h1>Pokémon-zero</h1>
+    <div class="login-logo">
+      Pokémon-zero
+    </div>
+
+    <h1>
+      트레이너 로그인
+    </h1>
 
     <p>
-      트레이너 번호와 비밀번호를 입력해주세요.
+      트레이너 번호와 비밀번호를 입력하세요.
     </p>
 
 
     <input
-      id="login-trainer"
+      id="trainer-number"
+      class="login-input"
       type="text"
       inputmode="numeric"
       maxlength="6"
-      placeholder="트레이너 번호"
+      placeholder="트레이너 번호 6자리"
       autocomplete="username"
     >
 
 
     <input
       id="login-password"
+      class="login-input"
       type="password"
       placeholder="비밀번호"
       autocomplete="current-password"
@@ -59,13 +252,14 @@
 
     <button
       id="login-btn"
+      class="primary"
       type="button"
     >
       로그인
     </button>
 
 
-    <p id="login-message"></p>
+    <div id="login-message"></div>
 
   </div>
 
@@ -78,6 +272,7 @@
 ========================= -->
 
 <div id="app">
+
 
   <header>
 
@@ -92,6 +287,7 @@
     </div>
 
   </header>
+
 
 
   <main>
@@ -112,18 +308,15 @@
           오늘의 할 일!
         </div>
 
-
         <h1>
           즐거운 모험을<br>
           떠나볼까요?
         </h1>
 
-
         <p>
           주위를 탐색하고 몬스터를 만나<br>
           즐거운 추억을 모아보세요.
         </p>
-
 
         <button
           class="primary"
@@ -218,7 +411,7 @@
 
 
     <!-- =========================
-         멤버 상세
+         프로필
     ========================= -->
 
     <section
@@ -243,7 +436,7 @@
 
 
     <!-- =========================
-         포켓몬
+         내 포켓몬
     ========================= -->
 
     <section
@@ -328,7 +521,6 @@
 
           <span class="land land2"></span>
 
-
           <span class="tree t1">
             🌲
           </span>
@@ -341,11 +533,9 @@
             🌳
           </span>
 
-
           <span class="water">
             💧
           </span>
-
 
           <span class="mountain">
             ⛰️
@@ -407,11 +597,9 @@
             현재 지역
           </span>
 
-
           <strong id="current-area">
             푸른 숲
           </strong>
-
 
           <div id="explore-count">
             오늘의 탐색 0 / 10회
@@ -503,7 +691,6 @@
 
         </div>
 
-
         <strong id="special-price"></strong>
 
       </div>
@@ -593,6 +780,7 @@
 
   </nav>
 
+
 </div>
 
 
@@ -606,14 +794,7 @@
 
 
 <!-- =========================
-     Supabase
-========================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-<!-- =========================
-     게임 JS
+     게임 스크립트
 ========================= -->
 
 <script src="script.js"></script>
@@ -622,4 +803,3 @@
 </body>
 
 </html>
-```
