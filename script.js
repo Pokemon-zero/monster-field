@@ -196,7 +196,7 @@ const items = {
     price: 80,
     desc: "탐험 중 발견한 오랭열매."
   },
-    rareCandy: {
+ rareCandy: {
     name: "이상한사탕",
     icon: "🍬",
     price: 1000,
