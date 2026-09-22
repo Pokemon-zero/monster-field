@@ -170,6 +170,10 @@ const members = [
 ];
 
 
+// 현재 로그인한 사용자
+// 임시로 풀잎(id 1)을 내 계정으로 설정
+const CURRENT_USER_ID = 1;
+
 /* =========================
    아이템
 ========================= */
@@ -598,7 +602,6 @@ document.addEventListener("click", e => {
 
 });
 
-
 /* =========================
    멤버 상세
 ========================= */
@@ -615,11 +618,38 @@ function showProfile(id) {
   }
 
 
+  const isMyProfile =
+    member.id === CURRENT_USER_ID;
+
+
+  const profileType =
+    isMyProfile
+      ? "내 프로필"
+      : "다른 사람 프로필";
+
+
+  const editButton =
+    isMyProfile
+      ? `
+        <button
+          class="primary profile-edit"
+          type="button"
+        >
+          ✏️ 프로필 수정
+        </button>
+      `
+      : "";
+
+
   document.getElementById(
     "profile-content"
   ).innerHTML = `
 
     <div class="profile-card">
+
+      <span class="tag">
+        ${profileType}
+      </span>
 
       <span class="tag">
         ${member.role}
@@ -633,6 +663,8 @@ function showProfile(id) {
         ${member.desc}
       </p>
 
+      ${editButton}
+
     </div>
 
   `;
@@ -641,7 +673,6 @@ function showProfile(id) {
   go("profile");
 
 }
-
 
 /* =========================
    포켓몬이 배울 수 있는 기술
