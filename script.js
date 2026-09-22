@@ -24,7 +24,7 @@ if(state.encounter===undefined) state.encounter=null;
 const members=[
  {id:1,name:"풀잎",role:"초보 트레이너",desc:"가자 포켓몬 마스터!"},
  {id:2,name:"초코",role:"초보 트레이너",desc:"용돈 부모님한테 받으면 안돼?"},
- {id:3,name:"미르",role:"초보 트레이너",desc:"드래곤 타입 전문가가 목표입니다"
+ {id:3,name:"미르",role:"초보 트레이너",desc:"드래곤 타입 전문가가 목표입니다"},
  {id:4,name:"보석",role:"초보 트레이너",desc:"내가 잘해야..."}
 ];
 
