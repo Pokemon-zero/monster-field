@@ -368,13 +368,10 @@ async function login() {
   }
 
 
-  const email =
-    trainerNumberToEmail(
-      trainerNumber
-    );
-
-
- const loginEmail = `${email}@pokemon-zero.com`;
+const email =
+  trainerNumberToEmail(
+    trainerNumber
+  );
 
 const {
   data,
@@ -382,7 +379,7 @@ const {
 } =
   await supabaseClient.auth.signInWithPassword({
 
-    email: loginEmail,
+    email: email,
 
     password: password
 
