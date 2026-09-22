@@ -1,5 +1,3 @@
-const CATCH_FAIL_RATE = 0.2;
-
 const defaultState = {
   money: 1000,
 
@@ -21,10 +19,32 @@ const defaultState = {
 };
 
 
+/* =========================
+   포획 실패 확률
+========================= */
+
+const CATCH_FAIL_RATE = 0.2;
+
+
+/* =========================
+   저장 데이터 불러오기
+========================= */
+
 let state =
   JSON.parse(
     localStorage.getItem("monsterGame") || "null"
   ) || defaultState;
+
+
+/* =========================
+   예전 저장 데이터 정리
+   HP 시스템 제거
+========================= */
+
+state.monsters.forEach(pokemon => {
+  delete pokemon.hp;
+  delete pokemon.maxHp;
+});
 
 
 /* =========================
@@ -78,41 +98,33 @@ if (!state.inventory) {
 
 }
 
-
 if (state.inventory.potion === undefined) {
   state.inventory.potion = 2;
 }
-
 
 if (state.inventory.ball === undefined) {
   state.inventory.ball = 3;
 }
 
-
 if (state.inventory.herb === undefined) {
   state.inventory.herb = 0;
 }
-
 
 if (!state.area) {
   state.area = "푸른 숲";
 }
 
-
 if (!Array.isArray(state.monsters)) {
   state.monsters = [];
 }
-
 
 if (state.encounter === undefined) {
   state.encounter = null;
 }
 
-
 if (state.exploreCount === undefined) {
   state.exploreCount = 0;
 }
-
 
 if (state.exploreDate === undefined) {
   state.exploreDate = "";
@@ -166,7 +178,7 @@ const items = {
     name: "상처약",
     icon: "🧪",
     price: 200,
-    desc: "HP를 조금 회복한다."
+    desc: "포켓몬의 상태를 회복하는 아이템."
   },
 
   ball: {
@@ -197,6 +209,8 @@ const monsters = [
     type: "노말, 비행",
     minLevel: 2,
     maxLevel: 5,
+    baseHp: 30,
+    catchRate: 0.75
   },
 
   {
@@ -204,6 +218,8 @@ const monsters = [
     type: "노말",
     minLevel: 2,
     maxLevel: 6,
+    baseHp: 35,
+    catchRate: 0.65
   },
 
   {
@@ -211,6 +227,8 @@ const monsters = [
     type: "노말",
     minLevel: 3,
     maxLevel: 7,
+    baseHp: 32,
+    catchRate: 0.55
   },
 
   {
@@ -218,6 +236,8 @@ const monsters = [
     type: "벌레",
     minLevel: 1,
     maxLevel: 5,
+    baseHp: 42,
+    catchRate: 0.8
   },
 
   {
@@ -225,6 +245,8 @@ const monsters = [
     type: "악",
     minLevel: 5,
     maxLevel: 10,
+    baseHp: 45,
+    catchRate: 0.3
   }
 
 ];
@@ -244,7 +266,6 @@ function checkExploreDay() {
     String(now.getMonth() + 1).padStart(2, "0") +
     "-" +
     String(now.getDate()).padStart(2, "0");
-
 
   if (state.exploreDate !== today) {
 
@@ -279,7 +300,7 @@ function save() {
 
 
 /* =========================
-   돈
+   돈 표시
 ========================= */
 
 function money() {
@@ -340,7 +361,6 @@ function go(page) {
   const target =
     document.getElementById(page);
 
-
   if (target) {
 
     target.classList.add("active");
@@ -371,11 +391,40 @@ function go(page) {
 document.addEventListener("click", e => {
 
 
-  /* 페이지 이동 */
+  /* =========================
+     기술 슬롯 클릭
+  ========================= */
+
+  const moveSlot =
+    e.target.closest(".move-slot");
+
+  if (moveSlot) {
+
+    e.stopPropagation();
+
+    const monsterCard =
+      moveSlot.closest("[data-monster-id]");
+
+    if (monsterCard) {
+
+      showMoveSelector(
+        monsterCard.dataset.monsterId,
+        Number(moveSlot.dataset.moveIndex)
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* =========================
+     페이지 이동
+  ========================= */
 
   const pageButton =
     e.target.closest("[data-page]");
-
 
   if (pageButton) {
 
@@ -386,11 +435,12 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 멤버 클릭 */
+  /* =========================
+     멤버 클릭
+  ========================= */
 
   const member =
     e.target.closest(".member");
-
 
   if (member) {
 
@@ -403,11 +453,12 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 포켓몬 클릭 */
+  /* =========================
+     포켓몬 클릭
+  ========================= */
 
   const monsterButton =
     e.target.closest("[data-monster-id]");
-
 
   if (monsterButton) {
 
@@ -420,11 +471,12 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 지도 */
+  /* =========================
+     지도
+  ========================= */
 
   const mapPoint =
     e.target.closest(".map-point");
-
 
   if (mapPoint) {
 
@@ -444,7 +496,9 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 탐색 */
+  /* =========================
+     탐색
+  ========================= */
 
   if (e.target.id === "explore-btn") {
 
@@ -455,37 +509,45 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 아이템 구매 */
+  /* =========================
+     아이템 구매
+  ========================= */
 
   const buy =
     e.target.closest("[data-buy]");
 
-
   if (buy) {
 
-    buyItem(buy.dataset.buy);
+    buyItem(
+      buy.dataset.buy
+    );
 
     return;
 
   }
 
 
-  /* 아이템 사용 */
+  /* =========================
+     아이템 사용
+  ========================= */
 
   const use =
     e.target.closest("[data-use]");
 
-
   if (use) {
 
-    useItem(use.dataset.use);
+    useItem(
+      use.dataset.use
+    );
 
     return;
 
   }
 
 
-  /* 도망 */
+  /* =========================
+     도망
+  ========================= */
 
   if (e.target.id === "run-away") {
 
@@ -493,14 +555,18 @@ document.addEventListener("click", e => {
 
     save();
 
-    toast("무사히 도망쳤다.");
+    toast(
+      "무사히 도망쳤다."
+    );
 
     return;
 
   }
 
 
-  /* 포획 */
+  /* =========================
+     포획
+  ========================= */
 
   if (e.target.id === "catch") {
 
@@ -511,11 +577,12 @@ document.addEventListener("click", e => {
   }
 
 
-  /* 빈 기술 슬롯 */
+  /* =========================
+     빈 기술 슬롯
+  ========================= */
 
   const emptyMove =
     e.target.closest(".move-slot.empty");
-
 
   if (emptyMove) {
 
@@ -535,8 +602,9 @@ document.addEventListener("click", e => {
 function showProfile(id) {
 
   const member =
-    members.find(x => x.id === id);
-
+    members.find(
+      x => x.id === id
+    );
 
   if (!member) {
     return;
@@ -572,7 +640,7 @@ function showProfile(id) {
 
 
 /* =========================
-   포켓몬에게 배울 수 있는 기술
+   포켓몬이 배울 수 있는 기술
 ========================= */
 
 function getLearnableMoves(pokemon) {
@@ -580,12 +648,38 @@ function getLearnableMoves(pokemon) {
   const data =
     moveData[pokemon.name] || [];
 
-
   return data.filter(move => {
 
     return move.learnLevel <= pokemon.level;
 
   });
+
+}
+
+
+/* =========================
+   기술 객체 만들기
+========================= */
+
+function createMove(move) {
+
+  return {
+
+    name: move.name,
+
+    learnLevel:
+      move.learnLevel,
+
+    power:
+      move.power,
+
+    accuracy:
+      move.accuracy,
+
+    pp:
+      move.pp
+
+  };
 
 }
 
@@ -622,13 +716,9 @@ function giveInitialMoves(pokemon) {
 
     if (!alreadyHas) {
 
-      pokemon.moves.push({
-        name: move.name,
-        learnLevel: move.learnLevel,
-        power: move.power,
-        accuracy: move.accuracy,
-        pp: move.pp
-      });
+      pokemon.moves.push(
+        createMove(move)
+      );
 
     }
 
@@ -646,7 +736,8 @@ function createWildMonster() {
   const base =
     monsters[
       Math.floor(
-        Math.random() * monsters.length
+        Math.random() *
+        monsters.length
       )
     ];
 
@@ -654,25 +745,20 @@ function createWildMonster() {
   const level =
     Math.floor(
       Math.random() *
-      (base.maxLevel - base.minLevel + 1)
+      (
+        base.maxLevel -
+        base.minLevel +
+        1
+      )
     ) +
     base.minLevel;
-
-
-  const maxHp =
-    base.baseHp +
-    (level * 3);
 
 
   return {
 
     ...base,
 
-    level,
-
-    maxHp,
-
-    hp: maxHp
+    level
 
   };
 
@@ -716,7 +802,10 @@ function explore() {
   }
 
 
-  /* 10% 확률로 포켓몬을 만나지 않음 */
+  /* =========================
+     10% 확률
+     포켓몬을 만나지 않음
+  ========================= */
 
   if (Math.random() < 0.1) {
 
@@ -735,13 +824,18 @@ function explore() {
   }
 
 
-  /* 포켓몬을 만남 */
+  /* =========================
+     포켓몬 만남
+  ========================= */
 
   state.encounter =
     createWildMonster();
 
 
-  /* 40% 확률로 오랭열매 발견 */
+  /* =========================
+     40% 확률
+     오랭열매 발견
+  ========================= */
 
   if (Math.random() < 0.4) {
 
@@ -802,11 +896,14 @@ function catchMonster() {
   state.inventory.ball--;
 
 
+  /* 20% 실패 / 80% 성공 */
+
   const success =
-    Math.random() >= 0.2;
+    Math.random() >= CATCH_FAIL_RATE;
 
 
   if (success) {
+
 
     const caught = {
 
@@ -823,18 +920,16 @@ function catchMonster() {
       level:
         wild.level,
 
-      hp:
-        wild.maxHp,
+      item:
+        null,
 
-      maxHp:
-        wild.maxHp,
-
-      moves: []
+      moves:
+        []
 
     };
 
 
-    /* 포획한 순간 배울 수 있는 기술 자동 습득 */
+    /* 포획 순간 배울 수 있는 기술 습득 */
 
     giveInitialMoves(caught);
 
@@ -854,13 +949,14 @@ function catchMonster() {
       `${caught.name} Lv.${caught.level}을/를 잡았다!`
     );
 
-  }
 
-  else {
+  } else {
+
 
     state.encounter = null;
 
     save();
+
 
     toast(
       "앗! 포켓몬이 볼에서 나와 버렸다!"
@@ -924,8 +1020,6 @@ function renderMonsters() {
     state.monsters.map(m => {
 
 
-      /* 예전에 잡은 포켓몬에게 moves가 없을 경우 */
-
       if (!Array.isArray(m.moves)) {
 
         m.moves = [];
@@ -933,16 +1027,11 @@ function renderMonsters() {
       }
 
 
-      /* 현재 레벨에서 배울 수 있는 기술 중
-         아직 배우지 않은 기술 자동 추가 */
-
       giveInitialMoves(m);
 
 
       const moves =
-        Array.isArray(m.moves)
-          ? m.moves
-          : [];
+        m.moves || [];
 
 
       const slots =
@@ -957,7 +1046,10 @@ function renderMonsters() {
 
               return `
 
-                <div class="move-slot empty">
+                <div
+                  class="move-slot empty"
+                  data-move-index="${i}"
+                >
                   기술 없음
                 </div>
 
@@ -968,10 +1060,11 @@ function renderMonsters() {
 
             return `
 
-              <div class="move-slot">
-
+              <div
+                class="move-slot"
+                data-move-index="${i}"
+              >
                 ${move.name}
-
               </div>
 
             `;
@@ -982,7 +1075,7 @@ function renderMonsters() {
 
       return `
 
-        <button
+        <div
           class="monster-card"
           data-monster-id="${m.id}"
         >
@@ -998,21 +1091,18 @@ function renderMonsters() {
             </p>
 
             <div class="monster-moves">
-
               ${slots}
-
             </div>
 
           </div>
 
-        </button>
+        </div>
 
       `;
 
-    }).join("");
+    })
+    .join("");
 
-
-  /* 기술 자동 추가가 있었다면 저장 */
 
   localStorage.setItem(
     "monsterGame",
@@ -1030,7 +1120,9 @@ function showMonsterDetail(id) {
 
   const pokemon =
     state.monsters.find(
-      x => String(x.id) === String(id)
+      x =>
+        String(x.id) ===
+        String(id)
     );
 
 
@@ -1045,8 +1137,6 @@ function showMonsterDetail(id) {
 
   }
 
-
-  /* 현재 레벨에서 배울 수 있는 기술 확인 */
 
   giveInitialMoves(pokemon);
 
@@ -1076,31 +1166,35 @@ function showMonsterDetail(id) {
 
     `;
 
-  }
+  } else {
 
-  else {
 
-    moveHTML = moves.map(move => `
+    moveHTML =
+      moves.map((move, index) => `
 
-      <div class="detail-stat">
+        <div
+          class="detail-stat"
+          data-monster-id="${pokemon.id}"
+        >
 
-        <small>
-          기술
-        </small>
+          <small>
+            기술 ${index + 1}
+          </small>
 
-        <b>
-          ${move.name}
-        </b>
+          <b>
+            ${move.name}
+          </b>
 
-        <span>
-          위력 ${move.power === null ? "-" : move.power}
-          · 명중 ${move.accuracy}%
-          · PP ${move.pp}
-        </span>
+          <span>
+            위력 ${move.power === null ? "-" : move.power}
+            · 명중 ${move.accuracy}%
+            · PP ${move.pp}
+          </span>
 
-      </div>
+        </div>
 
-    `).join("");
+      `)
+      .join("");
 
   }
 
@@ -1123,37 +1217,6 @@ function showMonsterDetail(id) {
         Lv.${pokemon.level}
       </p>
 
-
-      <div class="detail-stats">
-
-        <div class="detail-stat">
-
-          <small>
-            현재 HP
-          </small>
-
-          <b>
-            ${pokemon.hp}
-          </b>
-
-        </div>
-
-
-        <div class="detail-stat">
-
-          <small>
-            최대 HP
-          </small>
-
-          <b>
-            ${pokemon.maxHp}
-          </b>
-
-        </div>
-
-      </div>
-
-
       <div class="detail-stats">
 
         ${moveHTML}
@@ -1172,6 +1235,260 @@ function showMonsterDetail(id) {
 
 
   go("monster-detail");
+
+}
+
+
+/* =========================
+   기술 교체
+========================= */
+
+function showMoveSelector(
+  monsterId,
+  slotIndex
+) {
+
+  const pokemon =
+    state.monsters.find(
+      x =>
+        String(x.id) ===
+        String(monsterId)
+    );
+
+
+  if (!pokemon) {
+    return;
+  }
+
+
+  if (!Array.isArray(pokemon.moves)) {
+
+    pokemon.moves = [];
+
+  }
+
+
+  const learnable =
+    getLearnableMoves(pokemon);
+
+
+  /* =========================
+     현재 선택된 기술
+  ========================= */
+
+  const currentMove =
+    pokemon.moves[slotIndex];
+
+
+  /* =========================
+     배울 수 있는 모든 기술 표시
+     단, 다른 슬롯에 이미 있는
+     기술은 중복 방지
+  ========================= */
+
+  const available =
+    learnable.filter(move => {
+
+      const alreadyInOtherSlot =
+        pokemon.moves.some(
+          (learned, index) => {
+
+            return (
+              index !== slotIndex &&
+              learned &&
+              learned.name === move.name
+            );
+
+          }
+        );
+
+
+      return !alreadyInOtherSlot;
+
+    });
+
+
+  if (!available.length) {
+
+    toast(
+      "현재 배울 수 있는 기술이 없습니다."
+    );
+
+    return;
+
+  }
+
+
+  const names =
+    available
+      .map(move => {
+
+        const isCurrent =
+          currentMove &&
+          currentMove.name === move.name;
+
+
+        return `
+
+          <button
+            class="learn-move"
+            data-monster-id="${pokemon.id}"
+            data-slot-index="${slotIndex}"
+            data-move-name="${move.name}"
+          >
+
+            <b>
+              ${move.name}
+              ${isCurrent ? " ✓" : ""}
+            </b>
+
+            <span>
+              위력 ${move.power === null ? "-" : move.power}
+              · 명중 ${move.accuracy}%
+              · PP ${move.pp}
+            </span>
+
+          </button>
+
+        `;
+
+      })
+      .join("");
+
+
+  const selector =
+    document.createElement("div");
+
+
+  selector.className =
+    "move-selector";
+
+
+  selector.innerHTML = `
+
+    <div class="move-selector-box">
+
+      <h3>
+        기술 선택
+      </h3>
+
+      <p>
+        ${pokemon.name} Lv.${pokemon.level}
+      </p>
+
+      <div class="learn-move-list">
+
+        ${names}
+
+      </div>
+
+      <button
+        class="move-cancel"
+      >
+        취소
+      </button>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    selector
+  );
+
+
+  /* =========================
+     기술 선택
+  ========================= */
+
+  selector.addEventListener(
+    "click",
+    e => {
+
+
+      const moveButton =
+        e.target.closest(
+          ".learn-move"
+        );
+
+
+      if (!moveButton) {
+        return;
+      }
+
+
+      const moveName =
+        moveButton.dataset.moveName;
+
+
+      const newMove =
+        learnable.find(
+          move =>
+            move.name === moveName
+        );
+
+
+      if (!newMove) {
+        return;
+      }
+
+
+      /* 같은 기술이면 아무것도 하지 않음 */
+
+      if (
+        pokemon.moves[slotIndex] &&
+        pokemon.moves[slotIndex].name ===
+        newMove.name
+      ) {
+
+        selector.remove();
+
+        return;
+
+      }
+
+
+      /* 선택한 슬롯의 기술 교체 */
+
+      pokemon.moves[slotIndex] =
+        createMove(newMove);
+
+
+      localStorage.setItem(
+        "monsterGame",
+        JSON.stringify(state)
+      );
+
+
+      selector.remove();
+
+
+      render();
+
+
+      toast(
+        `${newMove.name}을(를) 배웠습니다!`
+      );
+
+    }
+  );
+
+
+  /* =========================
+     취소
+  ========================= */
+
+  selector
+    .querySelector(".move-cancel")
+    .addEventListener(
+      "click",
+      () => {
+
+        selector.remove();
+
+      }
+    );
 
 }
 
@@ -1241,7 +1558,9 @@ function buyItem(id) {
   }
 
 
-  state.money -= item.price;
+  state.money -=
+    item.price;
+
 
   state.inventory[id]++;
 
@@ -1274,32 +1593,34 @@ function renderMembers() {
 
 
   list.innerHTML =
-    members.map(member => `
+    members
+      .map(member => `
 
-      <button
-        class="member"
-        data-id="${member.id}"
-      >
+        <button
+          class="member"
+          data-id="${member.id}"
+        >
 
-        <div class="portrait">
-          👤
-        </div>
+          <div class="portrait">
+            👤
+          </div>
 
-        <div class="info">
+          <div class="info">
 
-          <h3>
-            ${member.name}
-          </h3>
+            <h3>
+              ${member.name}
+            </h3>
 
-          <p>
-            ${member.role}
-          </p>
+            <p>
+              ${member.role}
+            </p>
 
-        </div>
+          </div>
 
-      </button>
+        </button>
 
-    `).join("");
+      `)
+      .join("");
 
 }
 
@@ -1331,7 +1652,6 @@ function renderBag() {
             ${item.icon}
           </div>
 
-
           <div class="item-info">
 
             <b>
@@ -1344,7 +1664,6 @@ function renderBag() {
             </span>
 
           </div>
-
 
           <button
             class="use"
@@ -1401,7 +1720,11 @@ function renderShop() {
 
 
   const special =
-    ["potion", "ball", "herb"][
+    [
+      "potion",
+      "ball",
+      "herb"
+    ][
       day % 3
     ];
 
@@ -1431,7 +1754,6 @@ function renderShop() {
             ${item.icon}
           </div>
 
-
           <div class="item-info">
 
             <b>
@@ -1444,7 +1766,6 @@ function renderShop() {
             </span>
 
           </div>
-
 
           <button
             class="buy"
@@ -1528,12 +1849,6 @@ function renderMap() {
         Lv.${pokemon.level}
         이(가) 나타났다!
       </h3>
-
-      <p>
-        ${pokemon.type} 타입
-        · HP ${pokemon.hp}/${pokemon.maxHp}
-      </p>
-
 
       <div class="encounter-actions">
 
