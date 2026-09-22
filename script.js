@@ -212,8 +212,6 @@ const items = {
 
 const monsters = [
 
- const monsters = [
-
   {
     name: "구구",
     type: "노말, 비행",
@@ -1503,6 +1501,15 @@ function useItem(id) {
     toast(
       "아이템이 없다."
     );
+
+    return;
+
+  }
+
+
+  if (id === "rareCandy") {
+
+    showRareCandySelector();
 
     return;
 
