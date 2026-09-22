@@ -38,7 +38,6 @@ let state =
 
 /* =========================
    예전 저장 데이터 정리
-   HP 시스템 제거
 ========================= */
 
 state.monsters.forEach(pokemon => {
@@ -83,7 +82,6 @@ const moveData = {
 
 };
 
-
 /* =========================
    예전 저장 데이터와 호환
 ========================= */
@@ -93,7 +91,8 @@ if (!state.inventory) {
   state.inventory = {
     potion: 2,
     ball: 3,
-    herb: 0
+    herb: 0,
+    rareCandy: 0
   };
 
 }
@@ -108,6 +107,10 @@ if (state.inventory.ball === undefined) {
 
 if (state.inventory.herb === undefined) {
   state.inventory.herb = 0;
+}
+
+if (state.inventory.rareCandy === undefined) {
+  state.inventory.rareCandy = 0;
 }
 
 if (!state.area) {
@@ -129,7 +132,6 @@ if (state.exploreCount === undefined) {
 if (state.exploreDate === undefined) {
   state.exploreDate = "";
 }
-
 
 /* =========================
    멤버
@@ -193,6 +195,12 @@ const items = {
     icon: "🌿",
     price: 80,
     desc: "탐험 중 발견한 오랭열매."
+  },
+    rareCandy: {
+    name: "이상한사탕",
+    icon: "🍬",
+    price: 1000,
+    desc: "포켓몬의 레벨을 1 올린다."
   }
 
 };
@@ -204,53 +212,44 @@ const items = {
 
 const monsters = [
 
+ const monsters = [
+
   {
     name: "구구",
     type: "노말, 비행",
     minLevel: 2,
-    maxLevel: 5,
-    baseHp: 30,
-    catchRate: 0.75
+    maxLevel: 5
   },
 
   {
     name: "꼬렛",
     type: "노말",
     minLevel: 2,
-    maxLevel: 6,
-    baseHp: 35,
-    catchRate: 0.65
+    maxLevel: 6
   },
 
   {
     name: "꼬리선",
     type: "노말",
     minLevel: 3,
-    maxLevel: 7,
-    baseHp: 32,
-    catchRate: 0.55
+    maxLevel: 7
   },
 
   {
     name: "피콘",
     type: "벌레",
     minLevel: 1,
-    maxLevel: 5,
-    baseHp: 42,
-    catchRate: 0.8
+    maxLevel: 5
   },
 
   {
     name: "포챠냐",
     type: "악",
     minLevel: 5,
-    maxLevel: 10,
-    baseHp: 45,
-    catchRate: 0.3
+    maxLevel: 10
   }
 
 ];
-
 
 /* =========================
    날짜 확인
@@ -1502,7 +1501,7 @@ function useItem(id) {
   if (!state.inventory[id]) {
 
     toast(
-      "아이템이 없습니다."
+      "아이템이 없다."
     );
 
     return;
@@ -1517,7 +1516,7 @@ function useItem(id) {
     save();
 
     toast(
-      "상처약을 사용했습니다!"
+      "상처약을 사용했다!"
     );
 
     return;
@@ -1531,6 +1530,170 @@ function useItem(id) {
 
 }
 
+function showRareCandySelector() {
+
+  const selector =
+    document.createElement("div");
+
+  selector.className =
+    "move-selector";
+
+
+  const pokemonList =
+    state.monsters
+      .map(pokemon => {
+
+        return `
+
+          <button
+            class="learn-move"
+            data-monster-id="${pokemon.id}"
+          >
+
+            <b>
+              ${pokemon.name} Lv.${pokemon.level}
+            </b>
+
+            <span>
+              이상한사탕 사용 → Lv.${pokemon.level + 1}
+            </span>
+
+          </button>
+
+        `;
+
+      })
+      .join("");
+
+
+  selector.innerHTML = `
+
+    <div class="move-selector-box">
+
+      <h3>
+        이상한사탕 사용
+      </h3>
+
+      <p>
+        사탕을 줄 포켓몬을 선택하세요.
+      </p>
+
+      <div class="learn-move-list">
+        ${pokemonList}
+      </div>
+
+      <button
+        class="move-cancel"
+      >
+        취소
+      </button>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    selector
+  );
+
+
+  /* =========================
+     포켓몬 선택
+  ========================= */
+
+  selector.addEventListener(
+    "click",
+    e => {
+
+      const pokemonButton =
+        e.target.closest(
+          "[data-monster-id]"
+        );
+
+
+      if (!pokemonButton) {
+        return;
+      }
+
+
+      const pokemon =
+        state.monsters.find(
+          x =>
+            String(x.id) ===
+            String(
+              pokemonButton.dataset.monsterId
+            )
+        );
+
+
+      if (!pokemon) {
+        return;
+      }
+
+
+      if (!state.inventory.rareCandy) {
+        selector.remove();
+
+        toast(
+          "갖고 있는 사탕이 없다.."
+        );
+
+        return;
+      }
+
+
+      state.inventory.rareCandy--;
+
+
+      pokemon.level++;
+
+
+      /*
+        레벨이 올라가면서
+        새로 배울 수 있는 기술이 있다면
+        빈 기술 슬롯에 자동으로 추가
+      */
+
+      giveInitialMoves(pokemon);
+
+
+      localStorage.setItem(
+        "monsterGame",
+        JSON.stringify(state)
+      );
+
+
+      selector.remove();
+
+
+      render();
+
+
+      toast(
+        `${pokemon.name}의 레벨이 ${pokemon.level}이 되었다!`
+      );
+
+    }
+  );
+
+
+  /* =========================
+     취소
+  ========================= */
+
+  selector
+    .querySelector(".move-cancel")
+    .addEventListener(
+      "click",
+      () => {
+
+        selector.remove();
+
+      }
+    );
+
+}
 
 /* =========================
    상점 구매
