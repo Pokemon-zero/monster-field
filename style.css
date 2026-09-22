@@ -256,3 +256,21 @@ nav button.active{
   nav button{font-size:17px}
   nav button span{font-size:9px}
 }
+.rare-candy-selector {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  width: min(90%, 360px);
+  max-height: 80vh;
+  overflow-y: auto;
+
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+
+  z-index: 99999;
+}
