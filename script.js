@@ -501,7 +501,24 @@ function explore(){
   }
 
 
+  /* 탐색 횟수 증가 */
+
   state.exploreCount++;
+
+
+  /* 화면에 탐색 횟수 바로 표시 */
+
+  const exploreCount=
+    document.getElementById(
+      "explore-count"
+    );
+
+  if(exploreCount){
+
+    exploreCount.textContent=
+      `오늘의 탐색 ${state.exploreCount} / 10회`;
+
+  }
 
 
   /*
