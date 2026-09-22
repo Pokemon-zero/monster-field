@@ -1,3 +1,5 @@
+const CATCH_FAIL_RATE = 0.2;
+
 const defaultState = {
   money: 1000,
 
@@ -195,8 +197,6 @@ const monsters = [
     type: "노말, 비행",
     minLevel: 2,
     maxLevel: 5,
-    baseHp: 30,
-    catchRate: 0.75
   },
 
   {
@@ -204,8 +204,6 @@ const monsters = [
     type: "노말",
     minLevel: 2,
     maxLevel: 6,
-    baseHp: 35,
-    catchRate: 0.65
   },
 
   {
@@ -213,8 +211,6 @@ const monsters = [
     type: "노말",
     minLevel: 3,
     maxLevel: 7,
-    baseHp: 32,
-    catchRate: 0.55
   },
 
   {
@@ -222,8 +218,6 @@ const monsters = [
     type: "벌레",
     minLevel: 1,
     maxLevel: 5,
-    baseHp: 42,
-    catchRate: 0.8
   },
 
   {
@@ -231,8 +225,6 @@ const monsters = [
     type: "악",
     minLevel: 5,
     maxLevel: 10,
-    baseHp: 45,
-    catchRate: 0.3
   }
 
 ];
@@ -811,7 +803,7 @@ function catchMonster() {
 
 
   const success =
-    Math.random() < wild.catchRate;
+    Math.random() >= 0.2;
 
 
   if (success) {
