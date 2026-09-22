@@ -171,23 +171,25 @@ const monsters=[
 
 /* 저장 */
 
-function checkExploreDay(){
+function checkExploreDay(){ 
+ 
+  const now = new Date();
 
   const today =
-    new Date().toISOString().slice(0,10);
-
-  if(state.exploreDate !== today){
-
-    state.exploreDate = today;
-    state.exploreCount = 0;
-
-    localStorage.setItem(
-      "monsterGame",
-      JSON.stringify(state)
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0");
+ 
+  if(state.exploreDate !== today){ 
+ 
+    state.exploreDate = today; 
+    state.exploreCount = 0; 
+ 
+    localStorage.setItem( 
+      "monsterGame", 
+      JSON.stringify(state) 
     );
-
   }
-
 }
 
 
