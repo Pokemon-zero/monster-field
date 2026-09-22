@@ -1,3 +1,7 @@
+/* =========================
+   Supabase
+========================= */
+
 const SUPABASE_URL =
   "https://zjaylououskihlejjasa.supabase.co";
 
@@ -10,13 +14,27 @@ const supabaseClient =
     SUPABASE_KEY
   );
 
+
+/* =========================
+   로그인한 트레이너
+========================= */
+
+let currentTrainerNumber = null;
+
+
+/* =========================
+   기본 게임 데이터
+========================= */
+
 const defaultState = {
+
   money: 1000,
 
   inventory: {
     potion: 2,
     ball: 3,
-    herb: 0
+    herb: 0,
+    rareCandy: 0
   },
 
   area: "푸른 숲",
@@ -28,6 +46,7 @@ const defaultState = {
   exploreCount: 0,
 
   exploreDate: ""
+
 };
 
 
@@ -52,10 +71,64 @@ let state =
    예전 저장 데이터 정리
 ========================= */
 
+if (!Array.isArray(state.monsters)) {
+  state.monsters = [];
+}
+
 state.monsters.forEach(pokemon => {
+
   delete pokemon.hp;
   delete pokemon.maxHp;
+
 });
+
+
+/* =========================
+   예전 저장 데이터와 호환
+========================= */
+
+if (!state.inventory) {
+
+  state.inventory = {
+    potion: 2,
+    ball: 3,
+    herb: 0,
+    rareCandy: 0
+  };
+
+}
+
+if (state.inventory.potion === undefined) {
+  state.inventory.potion = 2;
+}
+
+if (state.inventory.ball === undefined) {
+  state.inventory.ball = 3;
+}
+
+if (state.inventory.herb === undefined) {
+  state.inventory.herb = 0;
+}
+
+if (state.inventory.rareCandy === undefined) {
+  state.inventory.rareCandy = 0;
+}
+
+if (!state.area) {
+  state.area = "푸른 숲";
+}
+
+if (state.encounter === undefined) {
+  state.encounter = null;
+}
+
+if (state.exploreCount === undefined) {
+  state.exploreCount = 0;
+}
+
+if (state.exploreDate === undefined) {
+  state.exploreDate = "";
+}
 
 
 /* =========================
@@ -94,56 +167,6 @@ const moveData = {
 
 };
 
-/* =========================
-   예전 저장 데이터와 호환
-========================= */
-
-if (!state.inventory) {
-
-  state.inventory = {
-    potion: 2,
-    ball: 3,
-    herb: 0,
-    rareCandy: 0
-  };
-
-}
-
-if (state.inventory.potion === undefined) {
-  state.inventory.potion = 2;
-}
-
-if (state.inventory.ball === undefined) {
-  state.inventory.ball = 3;
-}
-
-if (state.inventory.herb === undefined) {
-  state.inventory.herb = 0;
-}
-
-if (state.inventory.rareCandy === undefined) {
-  state.inventory.rareCandy = 0;
-}
-
-if (!state.area) {
-  state.area = "푸른 숲";
-}
-
-if (!Array.isArray(state.monsters)) {
-  state.monsters = [];
-}
-
-if (state.encounter === undefined) {
-  state.encounter = null;
-}
-
-if (state.exploreCount === undefined) {
-  state.exploreCount = 0;
-}
-
-if (state.exploreDate === undefined) {
-  state.exploreDate = "";
-}
 
 /* =========================
    멤버
@@ -153,6 +176,7 @@ const members = [
 
   {
     id: 1,
+    trainerNumber: "000001",
     name: "풀잎",
     role: "초보 트레이너",
     desc: "가자 포켓몬 마스터!"
@@ -160,6 +184,7 @@ const members = [
 
   {
     id: 2,
+    trainerNumber: "000002",
     name: "초코",
     role: "초보 트레이너",
     desc: "용돈 부모님한테 받으면 안돼?"
@@ -167,6 +192,7 @@ const members = [
 
   {
     id: 3,
+    trainerNumber: "000003",
     name: "미르",
     role: "초보 트레이너",
     desc: "드래곤 타입 전문가가 목표입니다."
@@ -174,6 +200,7 @@ const members = [
 
   {
     id: 4,
+    trainerNumber: "000004",
     name: "보석",
     role: "초보 트레이너",
     desc: "내가 잘해야..."
@@ -181,10 +208,6 @@ const members = [
 
 ];
 
-
-// 현재 로그인한 사용자
-// 임시로 풀잎(id 1)을 내 계정으로 설정
-const CURRENT_USER_ID = 1;
 
 /* =========================
    아이템
@@ -212,7 +235,8 @@ const items = {
     price: 80,
     desc: "탐험 중 발견한 오랭열매."
   },
- rareCandy: {
+
+  rareCandy: {
     name: "이상한사탕",
     icon: "🍬",
     price: 1000,
@@ -265,26 +289,300 @@ const monsters = [
 
 ];
 
+
+/* =========================
+   트레이너 번호 → Supabase 로그인용 ID
+========================= */
+
+function trainerToLoginId(trainerNumber) {
+
+  return (
+    trainerNumber +
+    "@pokemon-zero.local"
+  );
+
+}
+
+
+/* =========================
+   로그인
+========================= */
+
+async function login() {
+
+  const trainerInput =
+    document.getElementById(
+      "login-trainer"
+    );
+
+  const passwordInput =
+    document.getElementById(
+      "login-password"
+    );
+
+  const message =
+    document.getElementById(
+      "login-message"
+    );
+
+
+  if (
+    !trainerInput ||
+    !passwordInput ||
+    !message
+  ) {
+    return;
+  }
+
+
+  const trainerNumber =
+    trainerInput.value.trim();
+
+
+  const password =
+    passwordInput.value;
+
+
+  if (!/^\d{6}$/.test(trainerNumber)) {
+
+    message.textContent =
+      "트레이너 번호는 6자리 숫자입니다.";
+
+    return;
+
+  }
+
+
+  if (!password) {
+
+    message.textContent =
+      "비밀번호를 입력해주세요.";
+
+    return;
+
+  }
+
+
+  message.textContent =
+    "로그인 중...";
+
+
+  const loginId =
+    trainerToLoginId(
+      trainerNumber
+    );
+
+
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
+
+      email: loginId,
+
+      password: password
+
+    });
+
+
+  if (error) {
+
+    console.error(error);
+
+    message.textContent =
+      "트레이너 번호 또는 비밀번호가 올바르지 않습니다.";
+
+    return;
+
+  }
+
+
+  currentTrainerNumber =
+    trainerNumber;
+
+
+  localStorage.setItem(
+    "trainerNumber",
+    trainerNumber
+  );
+
+
+  document.getElementById(
+    "login-screen"
+  ).style.display = "none";
+
+
+  document.getElementById(
+    "app"
+  ).style.display = "block";
+
+
+  message.textContent = "";
+
+
+  render();
+
+}
+
+
+/* =========================
+   로그아웃
+========================= */
+
+async function logout() {
+
+  await supabaseClient.auth.signOut();
+
+
+  currentTrainerNumber = null;
+
+
+  localStorage.removeItem(
+    "trainerNumber"
+  );
+
+
+  document.getElementById(
+    "app"
+  ).style.display = "none";
+
+
+  document.getElementById(
+    "login-screen"
+  ).style.display = "flex";
+
+}
+
+
+/* =========================
+   로그인 상태 확인
+========================= */
+
+async function checkLogin() {
+
+  const { data } =
+    await supabaseClient.auth.getSession();
+
+
+  if (data.session) {
+
+    const savedTrainer =
+      localStorage.getItem(
+        "trainerNumber"
+      );
+
+
+    if (savedTrainer) {
+
+      currentTrainerNumber =
+        savedTrainer;
+
+      document.getElementById(
+        "login-screen"
+      ).style.display = "none";
+
+      document.getElementById(
+        "app"
+      ).style.display = "block";
+
+      render();
+
+      return;
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "login-screen"
+  ).style.display = "flex";
+
+
+  document.getElementById(
+    "app"
+  ).style.display = "none";
+
+}
+
+
+/* =========================
+   로그인 버튼
+========================= */
+
+const loginButton =
+  document.getElementById(
+    "login-btn"
+  );
+
+
+if (loginButton) {
+
+  loginButton.addEventListener(
+    "click",
+    login
+  );
+
+}
+
+
+/* =========================
+   Enter 키 로그인
+========================= */
+
+document.addEventListener(
+  "keydown",
+  e => {
+
+    if (
+      e.key === "Enter" &&
+      (
+        document.activeElement?.id ===
+          "login-trainer" ||
+        document.activeElement?.id ===
+          "login-password"
+      )
+    ) {
+
+      login();
+
+    }
+
+  }
+);
+
+
 /* =========================
    날짜 확인
 ========================= */
 
 function checkExploreDay() {
 
-  const now = new Date();
+  const now =
+    new Date();
+
 
   const today =
     now.getFullYear() +
     "-" +
-    String(now.getMonth() + 1).padStart(2, "0") +
+    String(
+      now.getMonth() + 1
+    ).padStart(2, "0") +
     "-" +
-    String(now.getDate()).padStart(2, "0");
+    String(
+      now.getDate()
+    ).padStart(2, "0");
 
-  if (state.exploreDate !== today) {
 
-    state.exploreDate = today;
+  if (
+    state.exploreDate !==
+    today
+  ) {
 
-    state.exploreCount = 0;
+    state.exploreDate =
+      today;
+
+    state.exploreCount =
+      0;
+
 
     localStorage.setItem(
       "monsterGame",
@@ -307,6 +605,7 @@ function save() {
     JSON.stringify(state)
   );
 
+
   render();
 
 }
@@ -319,7 +618,10 @@ function save() {
 function money() {
 
   const element =
-    document.getElementById("money");
+    document.getElementById(
+      "money"
+    );
+
 
   if (element) {
 
@@ -338,19 +640,30 @@ function money() {
 function toast(t) {
 
   const element =
-    document.getElementById("toast");
+    document.getElementById(
+      "toast"
+    );
+
 
   if (!element) {
     return;
   }
 
-  element.textContent = t;
 
-  element.classList.add("show");
+  element.textContent =
+    t;
+
+
+  element.classList.add(
+    "show"
+  );
+
 
   setTimeout(() => {
 
-    element.classList.remove("show");
+    element.classList.remove(
+      "show"
+    );
 
   }, 1800);
 
@@ -363,33 +676,46 @@ function toast(t) {
 
 function go(page) {
 
-  document.querySelectorAll(".page")
-    .forEach(x => {
+  document.querySelectorAll(
+    ".page"
+  ).forEach(x => {
 
-      x.classList.remove("active");
+    x.classList.remove(
+      "active"
+    );
 
-    });
+  });
 
 
   const target =
-    document.getElementById(page);
+    document.getElementById(
+      page
+    );
+
 
   if (target) {
 
-    target.classList.add("active");
+    target.classList.add(
+      "active"
+    );
 
   }
 
 
-  document.querySelectorAll("nav button")
-    .forEach(x => {
+  document.querySelectorAll(
+    "nav button"
+  ).forEach(x => {
 
-      x.classList.toggle(
-        "active",
-        x.dataset.page === page
-      );
+    x.classList.toggle(
 
-    });
+      "active",
+
+      x.dataset.page ===
+        page
+
+    );
+
+  });
 
 
   render();
@@ -401,218 +727,281 @@ function go(page) {
    클릭 처리
 ========================= */
 
-document.addEventListener("click", e => {
-
-  /* 모달 안에서 발생한 클릭은
-     바깥쪽 클릭 처리로 넘어가지 않게 함 */
-
-  if (e.target.closest(".move-selector")) {
-    return;
-  }
+document.addEventListener(
+  "click",
+  e => {
 
 
-  /* =========================
-     기술 슬롯 클릭
-  ========================= */
+    if (
+      e.target.closest(
+        ".move-selector"
+      )
+    ) {
+      return;
+    }
 
-  const moveSlot =
-    e.target.closest(".move-slot");
 
-  if (moveSlot) {
+    /* =========================
+       기술 슬롯
+    ========================= */
 
-    e.stopPropagation();
-
-    const monsterCard =
-      moveSlot.closest("[data-monster-id]");
-
-    if (monsterCard) {
-
-      showMoveSelector(
-        monsterCard.dataset.monsterId,
-        Number(moveSlot.dataset.moveIndex)
+    const moveSlot =
+      e.target.closest(
+        ".move-slot"
       );
+
+
+    if (moveSlot) {
+
+      e.stopPropagation();
+
+
+      const monsterCard =
+        moveSlot.closest(
+          "[data-monster-id]"
+        );
+
+
+      if (monsterCard) {
+
+        showMoveSelector(
+
+          monsterCard.dataset.monsterId,
+
+          Number(
+            moveSlot.dataset.moveIndex
+          )
+
+        );
+
+      }
+
+
+      return;
 
     }
 
-    return;
+
+    /* =========================
+       페이지 이동
+    ========================= */
+
+    const pageButton =
+      e.target.closest(
+        "[data-page]"
+      );
+
+
+    if (pageButton) {
+
+      go(
+        pageButton.dataset.page
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       멤버 클릭
+    ========================= */
+
+    const member =
+      e.target.closest(
+        ".member"
+      );
+
+
+    if (member) {
+
+      showProfile(
+        Number(
+          member.dataset.id
+        )
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       포켓몬 클릭
+    ========================= */
+
+    const monsterButton =
+      e.target.closest(
+        "[data-monster-id]"
+      );
+
+
+    if (monsterButton) {
+
+      showMonsterDetail(
+        monsterButton.dataset.monsterId
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       지도
+    ========================= */
+
+    const mapPoint =
+      e.target.closest(
+        ".map-point"
+      );
+
+
+    if (mapPoint) {
+
+      state.area =
+        mapPoint.dataset.area;
+
+
+      state.encounter =
+        null;
+
+
+      save();
+
+
+      toast(
+        state.area +
+        "로 이동했습니다."
+      );
+
+
+      return;
+
+    }
+
+
+    /* =========================
+       탐색
+    ========================= */
+
+    if (
+      e.target.id ===
+      "explore-btn"
+    ) {
+
+      explore();
+
+      return;
+
+    }
+
+
+    /* =========================
+       아이템 구매
+    ========================= */
+
+    const buy =
+      e.target.closest(
+        "[data-buy]"
+      );
+
+
+    if (buy) {
+
+      buyItem(
+        buy.dataset.buy
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       아이템 사용
+    ========================= */
+
+    const use =
+      e.target.closest(
+        "[data-use]"
+      );
+
+
+    if (use) {
+
+      useItem(
+        use.dataset.use
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       도망
+    ========================= */
+
+    if (
+      e.target.id ===
+      "run-away"
+    ) {
+
+      state.encounter =
+        null;
+
+
+      save();
+
+
+      toast(
+        "무사히 도망쳤다."
+      );
+
+
+      return;
+
+    }
+
+
+    /* =========================
+       포획
+    ========================= */
+
+    if (
+      e.target.id ===
+      "catch"
+    ) {
+
+      catchMonster();
+
+      return;
+
+    }
+
+
+    /* =========================
+       빈 기술 슬롯
+    ========================= */
+
+    const emptyMove =
+      e.target.closest(
+        ".move-slot.empty"
+      );
+
+
+    if (emptyMove) {
+
+      e.stopPropagation();
+
+      return;
+
+    }
 
   }
+);
 
-
-  /* =========================
-     페이지 이동
-  ========================= */
-
-  const pageButton =
-    e.target.closest("[data-page]");
-
-  if (pageButton) {
-
-    go(pageButton.dataset.page);
-
-    return;
-
-  }
-
-
-  /* =========================
-     멤버 클릭
-  ========================= */
-
-  const member =
-    e.target.closest(".member");
-
-  if (member) {
-
-    showProfile(
-      Number(member.dataset.id)
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     포켓몬 클릭
-  ========================= */
-
-  const monsterButton =
-    e.target.closest("[data-monster-id]");
-
-  if (monsterButton) {
-
-    showMonsterDetail(
-      monsterButton.dataset.monsterId
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     지도
-  ========================= */
-
-  const mapPoint =
-    e.target.closest(".map-point");
-
-  if (mapPoint) {
-
-    state.area =
-      mapPoint.dataset.area;
-
-    state.encounter = null;
-
-    save();
-
-    toast(
-      state.area + "로 이동했습니다."
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     탐색
-  ========================= */
-
-  if (e.target.id === "explore-btn") {
-
-    explore();
-
-    return;
-
-  }
-
-
-  /* =========================
-     아이템 구매
-  ========================= */
-
-  const buy =
-    e.target.closest("[data-buy]");
-
-  if (buy) {
-
-    buyItem(
-      buy.dataset.buy
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     아이템 사용
-  ========================= */
-
-  const use =
-    e.target.closest("[data-use]");
-
-  if (use) {
-
-    useItem(
-      use.dataset.use
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     도망
-  ========================= */
-
-  if (e.target.id === "run-away") {
-
-    state.encounter = null;
-
-    save();
-
-    toast(
-      "무사히 도망쳤다."
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     포획
-  ========================= */
-
-  if (e.target.id === "catch") {
-
-    catchMonster();
-
-    return;
-
-  }
-
-
-  /* =========================
-     빈 기술 슬롯
-  ========================= */
-
-  const emptyMove =
-    e.target.closest(".move-slot.empty");
-
-  if (emptyMove) {
-
-    e.stopPropagation();
-
-    return;
-
-  }
-
-});
 
 /* =========================
    멤버 상세
@@ -625,32 +1014,25 @@ function showProfile(id) {
       x => x.id === id
     );
 
+
   if (!member) {
     return;
   }
 
 
   const isMyProfile =
-    member.id === CURRENT_USER_ID;
+    String(
+      member.trainerNumber
+    ) ===
+    String(
+      currentTrainerNumber
+    );
 
 
   const profileType =
     isMyProfile
       ? "내 프로필"
-      : "다른 사람 프로필";
-
-
-  const editButton =
-    isMyProfile
-      ? `
-        <button
-          class="primary profile-edit"
-          type="button"
-        >
-          ✏️ 프로필 수정
-        </button>
-      `
-      : "";
+      : "프로필";
 
 
   document.getElementById(
@@ -675,7 +1057,10 @@ function showProfile(id) {
         ${member.desc}
       </p>
 
-      ${editButton}
+      <p>
+        트레이너 번호
+        ${member.trainerNumber}
+      </p>
 
     </div>
 
@@ -686,20 +1071,26 @@ function showProfile(id) {
 
 }
 
+
 /* =========================
    포켓몬이 배울 수 있는 기술
 ========================= */
 
-function getLearnableMoves(pokemon) {
+function getLearnableMoves(
+  pokemon
+) {
 
   const data =
-    moveData[pokemon.name] || [];
+    moveData[
+      pokemon.name
+    ] || [];
 
-  return data.filter(move => {
 
-    return move.learnLevel <= pokemon.level;
-
-  });
+  return data.filter(
+    move =>
+      move.learnLevel <=
+      pokemon.level
+  );
 
 }
 
@@ -708,11 +1099,14 @@ function getLearnableMoves(pokemon) {
    기술 객체 만들기
 ========================= */
 
-function createMove(move) {
+function createMove(
+  move
+) {
 
   return {
 
-    name: move.name,
+    name:
+      move.name,
 
     learnLevel:
       move.learnLevel,
@@ -735,41 +1129,56 @@ function createMove(move) {
    레벨에 맞는 기술 자동 습득
 ========================= */
 
-function giveInitialMoves(pokemon) {
+function giveInitialMoves(
+  pokemon
+) {
 
   const learnable =
-    getLearnableMoves(pokemon);
+    getLearnableMoves(
+      pokemon
+    );
 
 
-  if (!Array.isArray(pokemon.moves)) {
+  if (
+    !Array.isArray(
+      pokemon.moves
+    )
+  ) {
 
     pokemon.moves = [];
 
   }
 
 
-  learnable.forEach(move => {
+  learnable.forEach(
+    move => {
 
-    if (pokemon.moves.length >= 4) {
-      return;
+      if (
+        pokemon.moves.length >=
+        4
+      ) {
+        return;
+      }
+
+
+      const alreadyHas =
+        pokemon.moves.some(
+          x =>
+            x.name ===
+            move.name
+        );
+
+
+      if (!alreadyHas) {
+
+        pokemon.moves.push(
+          createMove(move)
+        );
+
+      }
+
     }
-
-
-    const alreadyHas =
-      pokemon.moves.some(
-        x => x.name === move.name
-      );
-
-
-    if (!alreadyHas) {
-
-      pokemon.moves.push(
-        createMove(move)
-      );
-
-    }
-
-  });
+  );
 
 }
 
@@ -821,7 +1230,10 @@ function explore() {
   checkExploreDay();
 
 
-  if (state.exploreCount >= 10) {
+  if (
+    state.exploreCount >=
+    10
+  ) {
 
     toast(
       "오늘은 더 이상 탐색할 수 없습니다."
@@ -849,50 +1261,57 @@ function explore() {
   }
 
 
-  /* =========================
-     10% 확률
-     포켓몬을 만나지 않음
-  ========================= */
+  /* 10% 확률 */
 
-  if (Math.random() < 0.1) {
+  if (
+    Math.random() <
+    0.1
+  ) {
 
-    state.money += 100;
+    state.money +=
+      100;
 
-    state.encounter = null;
+
+    state.encounter =
+      null;
+
 
     save();
+
 
     toast(
       "포켓몬을 만나지 못했다. 100G를 획득했다!"
     );
+
 
     return;
 
   }
 
 
-  /* =========================
-     포켓몬 만남
-  ========================= */
+  /* 포켓몬 만남 */
 
   state.encounter =
     createWildMonster();
 
 
-  /* =========================
-     40% 확률
-     오랭열매 발견
-  ========================= */
+  /* 40% 확률 오랭열매 */
 
-  if (Math.random() < 0.4) {
+  if (
+    Math.random() <
+    0.4
+  ) {
 
     state.inventory.herb++;
 
+
     save();
+
 
     toast(
       "야생 포켓몬이 나타났다! 오랭열매도 발견했다."
     );
+
 
     return;
 
@@ -900,6 +1319,7 @@ function explore() {
 
 
   save();
+
 
   toast(
     "야생 포켓몬이 나타났다!"
@@ -943,14 +1363,12 @@ function catchMonster() {
   state.inventory.ball--;
 
 
-  /* 20% 실패 / 80% 성공 */
-
   const success =
-    Math.random() >= CATCH_FAIL_RATE;
+    Math.random() >=
+    CATCH_FAIL_RATE;
 
 
   if (success) {
-
 
     const caught = {
 
@@ -976,9 +1394,9 @@ function catchMonster() {
     };
 
 
-    /* 포획 순간 배울 수 있는 기술 습득 */
-
-    giveInitialMoves(caught);
+    giveInitialMoves(
+      caught
+    );
 
 
     state.monsters.push(
@@ -986,7 +1404,8 @@ function catchMonster() {
     );
 
 
-    state.encounter = null;
+    state.encounter =
+      null;
 
 
     save();
@@ -999,8 +1418,9 @@ function catchMonster() {
 
   } else {
 
+    state.encounter =
+      null;
 
-    state.encounter = null;
 
     save();
 
@@ -1058,97 +1478,102 @@ function renderMonsters() {
 
     `;
 
+
     return;
 
   }
 
 
   list.innerHTML =
-    state.monsters.map(m => {
+    state.monsters
+      .map(m => {
+
+        if (
+          !Array.isArray(
+            m.moves
+          )
+        ) {
+
+          m.moves = [];
+
+        }
 
 
-      if (!Array.isArray(m.moves)) {
-
-        m.moves = [];
-
-      }
+        giveInitialMoves(m);
 
 
-      giveInitialMoves(m);
+        const moves =
+          m.moves || [];
 
 
-      const moves =
-        m.moves || [];
+        const slots =
+          [0, 1, 2, 3]
+            .map(i => {
+
+              const move =
+                moves[i];
 
 
-      const slots =
-        [0, 1, 2, 3]
-          .map(i => {
+              if (!move) {
 
-            const move =
-              moves[i];
+                return `
 
+                  <div
+                    class="move-slot empty"
+                    data-move-index="${i}"
+                  >
+                    기술 없음
+                  </div>
 
-            if (!move) {
+                `;
+
+              }
+
 
               return `
 
                 <div
-                  class="move-slot empty"
+                  class="move-slot"
                   data-move-index="${i}"
                 >
-                  기술 없음
+                  ${move.name}
                 </div>
 
               `;
 
-            }
+            })
+            .join("");
 
 
-            return `
+        return `
 
-              <div
-                class="move-slot"
-                data-move-index="${i}"
-              >
-                ${move.name}
+          <div
+            class="monster-card"
+            data-monster-id="${m.id}"
+          >
+
+            <div class="monster-info">
+
+              <h3>
+                ${m.name}
+              </h3>
+
+              <p>
+                Lv.${m.level} · ${m.type} 타입
+              </p>
+
+              <div class="monster-moves">
+                ${slots}
               </div>
 
-            `;
-
-          })
-          .join("");
-
-
-      return `
-
-        <div
-          class="monster-card"
-          data-monster-id="${m.id}"
-        >
-
-          <div class="monster-info">
-
-            <h3>
-              ${m.name}
-            </h3>
-
-            <p>
-              Lv.${m.level} · ${m.type} 타입
-            </p>
-
-            <div class="monster-moves">
-              ${slots}
             </div>
 
           </div>
 
-        </div>
+        `;
 
-      `;
-
-    })
-    .join("");
+      })
+      .join("");
 
 
   localStorage.setItem(
@@ -1163,7 +1588,9 @@ function renderMonsters() {
    포켓몬 상세
 ========================= */
 
-function showMonsterDetail(id) {
+function showMonsterDetail(
+  id
+) {
 
   const pokemon =
     state.monsters.find(
@@ -1178,14 +1605,20 @@ function showMonsterDetail(id) {
   }
 
 
-  if (!Array.isArray(pokemon.moves)) {
+  if (
+    !Array.isArray(
+      pokemon.moves
+    )
+  ) {
 
     pokemon.moves = [];
 
   }
 
 
-  giveInitialMoves(pokemon);
+  giveInitialMoves(
+    pokemon
+  );
 
 
   const moves =
@@ -1215,33 +1648,38 @@ function showMonsterDetail(id) {
 
   } else {
 
-
     moveHTML =
-      moves.map((move, index) => `
+      moves
+        .map(
+          (move, index) => `
 
-        <div
-          class="detail-stat"
-          data-monster-id="${pokemon.id}"
-        >
+            <div
+              class="detail-stat"
+              data-monster-id="${pokemon.id}"
+            >
 
-          <small>
-            기술 ${index + 1}
-          </small>
+              <small>
+                기술 ${index + 1}
+              </small>
 
-          <b>
-            ${move.name}
-          </b>
+              <b>
+                ${move.name}
+              </b>
 
-          <span>
-            위력 ${move.power === null ? "-" : move.power}
-            · 명중 ${move.accuracy}%
-            · PP ${move.pp}
-          </span>
+              <span>
+                위력
+                ${move.power === null ? "-" : move.power}
+                · 명중
+                ${move.accuracy}%
+                · PP
+                ${move.pp}
+              </span>
 
-        </div>
+            </div>
 
-      `)
-      .join("");
+          `
+        )
+        .join("");
 
   }
 
@@ -1281,7 +1719,9 @@ function showMonsterDetail(id) {
   );
 
 
-  go("monster-detail");
+  go(
+    "monster-detail"
+  );
 
 }
 
@@ -1308,7 +1748,11 @@ function showMoveSelector(
   }
 
 
-  if (!Array.isArray(pokemon.moves)) {
+  if (
+    !Array.isArray(
+      pokemon.moves
+    )
+  ) {
 
     pokemon.moves = [];
 
@@ -1316,43 +1760,44 @@ function showMoveSelector(
 
 
   const learnable =
-    getLearnableMoves(pokemon);
+    getLearnableMoves(
+      pokemon
+    );
 
-
-  /* =========================
-     현재 선택된 기술
-  ========================= */
 
   const currentMove =
-    pokemon.moves[slotIndex];
+    pokemon.moves[
+      slotIndex
+    ];
 
-
-  /* =========================
-     배울 수 있는 모든 기술 표시
-     단, 다른 슬롯에 이미 있는
-     기술은 중복 방지
-  ========================= */
 
   const available =
-    learnable.filter(move => {
+    learnable.filter(
+      move => {
 
-      const alreadyInOtherSlot =
-        pokemon.moves.some(
-          (learned, index) => {
+        const alreadyInOtherSlot =
+          pokemon.moves.some(
+            (
+              learned,
+              index
+            ) => {
 
-            return (
-              index !== slotIndex &&
-              learned &&
-              learned.name === move.name
-            );
+              return (
+                index !==
+                  slotIndex &&
+                learned &&
+                learned.name ===
+                  move.name
+              );
 
-          }
-        );
+            }
+          );
 
 
-      return !alreadyInOtherSlot;
+        return !alreadyInOtherSlot;
 
-    });
+      }
+    );
 
 
   if (!available.length) {
@@ -1372,7 +1817,8 @@ function showMoveSelector(
 
         const isCurrent =
           currentMove &&
-          currentMove.name === move.name;
+          currentMove.name ===
+            move.name;
 
 
         return `
@@ -1390,9 +1836,12 @@ function showMoveSelector(
             </b>
 
             <span>
-              위력 ${move.power === null ? "-" : move.power}
-              · 명중 ${move.accuracy}%
-              · PP ${move.pp}
+              위력
+              ${move.power === null ? "-" : move.power}
+              · 명중
+              ${move.accuracy}%
+              · PP
+              ${move.pp}
             </span>
 
           </button>
@@ -1404,7 +1853,9 @@ function showMoveSelector(
 
 
   const selector =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   selector.className =
@@ -1445,14 +1896,9 @@ function showMoveSelector(
   );
 
 
-  /* =========================
-     기술 선택
-  ========================= */
-
   selector.addEventListener(
     "click",
     e => {
-
 
       const moveButton =
         e.target.closest(
@@ -1472,7 +1918,8 @@ function showMoveSelector(
       const newMove =
         learnable.find(
           move =>
-            move.name === moveName
+            move.name ===
+            moveName
         );
 
 
@@ -1481,12 +1928,14 @@ function showMoveSelector(
       }
 
 
-      /* 같은 기술이면 아무것도 하지 않음 */
-
       if (
-        pokemon.moves[slotIndex] &&
-        pokemon.moves[slotIndex].name ===
-        newMove.name
+        pokemon.moves[
+          slotIndex
+        ] &&
+        pokemon.moves[
+          slotIndex
+        ].name ===
+          newMove.name
       ) {
 
         selector.remove();
@@ -1496,10 +1945,12 @@ function showMoveSelector(
       }
 
 
-      /* 선택한 슬롯의 기술 교체 */
-
-      pokemon.moves[slotIndex] =
-        createMove(newMove);
+      pokemon.moves[
+        slotIndex
+      ] =
+        createMove(
+          newMove
+        );
 
 
       localStorage.setItem(
@@ -1522,12 +1973,10 @@ function showMoveSelector(
   );
 
 
-  /* =========================
-     취소
-  ========================= */
-
   selector
-    .querySelector(".move-cancel")
+    .querySelector(
+      ".move-cancel"
+    )
     .addEventListener(
       "click",
       () => {
@@ -1557,7 +2006,9 @@ function useItem(id) {
   }
 
 
-  if (id === "rareCandy") {
+  if (
+    id === "rareCandy"
+  ) {
 
     showRareCandySelector();
 
@@ -1566,15 +2017,20 @@ function useItem(id) {
   }
 
 
-  if (id === "potion") {
+  if (
+    id === "potion"
+  ) {
 
     state.inventory.potion--;
 
+
     save();
+
 
     toast(
       "상처약을 사용했다!"
     );
+
 
     return;
 
@@ -1587,10 +2043,18 @@ function useItem(id) {
 
 }
 
+
+/* =========================
+   이상한사탕 포켓몬 선택
+========================= */
+
 function showRareCandySelector() {
 
   const selector =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
+
 
   selector.className =
     "move-selector";
@@ -1598,9 +2062,8 @@ function showRareCandySelector() {
 
   const pokemonList =
     state.monsters
-      .map(pokemon => {
-
-        return `
+      .map(
+        pokemon => `
 
           <button
             class="learn-move"
@@ -1608,18 +2071,20 @@ function showRareCandySelector() {
           >
 
             <b>
-              ${pokemon.name} Lv.${pokemon.level}
+              ${pokemon.name}
+              Lv.${pokemon.level}
             </b>
 
             <span>
-              이상한사탕 사용 → Lv.${pokemon.level + 1}
+              이상한사탕 사용
+              →
+              Lv.${pokemon.level + 1}
             </span>
 
           </button>
 
-        `;
-
-      })
+        `
+      )
       .join("");
 
 
@@ -1636,7 +2101,9 @@ function showRareCandySelector() {
       </p>
 
       <div class="learn-move-list">
+
         ${pokemonList}
+
       </div>
 
       <button
@@ -1654,10 +2121,6 @@ function showRareCandySelector() {
     selector
   );
 
-
-  /* =========================
-     포켓몬 선택
-  ========================= */
 
   selector.addEventListener(
     "click",
@@ -1689,14 +2152,20 @@ function showRareCandySelector() {
       }
 
 
-      if (!state.inventory.rareCandy) {
+      if (
+        !state.inventory.rareCandy
+      ) {
+
         selector.remove();
 
+
         toast(
-          "갖고 있는 사탕이 없다.."
+          "갖고 있는 사탕이 없다."
         );
 
+
         return;
+
       }
 
 
@@ -1706,13 +2175,9 @@ function showRareCandySelector() {
       pokemon.level++;
 
 
-      /*
-        레벨이 올라가면서
-        새로 배울 수 있는 기술이 있다면
-        빈 기술 슬롯에 자동으로 추가
-      */
-
-      giveInitialMoves(pokemon);
+      giveInitialMoves(
+        pokemon
+      );
 
 
       localStorage.setItem(
@@ -1735,12 +2200,10 @@ function showRareCandySelector() {
   );
 
 
-  /* =========================
-     취소
-  ========================= */
-
   selector
-    .querySelector(".move-cancel")
+    .querySelector(
+      ".move-cancel"
+    )
     .addEventListener(
       "click",
       () => {
@@ -1751,6 +2214,7 @@ function showRareCandySelector() {
     );
 
 }
+
 
 /* =========================
    상점 구매
@@ -1767,11 +2231,15 @@ function buyItem(id) {
   }
 
 
-  if (state.money < item.price) {
+  if (
+    state.money <
+    item.price
+  ) {
 
     toast(
       "돈이 부족합니다."
     );
+
 
     return;
 
@@ -1814,32 +2282,59 @@ function renderMembers() {
 
   list.innerHTML =
     members
-      .map(member => `
+      .map(
+        member => {
 
-        <button
-          class="member"
-          data-id="${member.id}"
-        >
+          const isMyProfile =
+            String(
+              member.trainerNumber
+            ) ===
+            String(
+              currentTrainerNumber
+            );
 
-          <div class="portrait">
-            👤
-          </div>
 
-          <div class="info">
+          return `
 
-            <h3>
-              ${member.name}
-            </h3>
+            <button
+              class="member"
+              data-id="${member.id}"
+            >
 
-            <p>
-              ${member.role}
-            </p>
+              <div class="portrait">
+                👤
+              </div>
 
-          </div>
+              <div class="info">
 
-        </button>
+                <h3>
 
-      `)
+                  ${member.name}
+
+                  ${
+                    isMyProfile
+                      ? `
+                        <span class="my-profile">
+                          내 프로필
+                        </span>
+                      `
+                      : ""
+                  }
+
+                </h3>
+
+                <p>
+                  ${member.role}
+                </p>
+
+              </div>
+
+            </button>
+
+          `;
+
+        }
+      )
       .join("");
 
 }
@@ -1863,38 +2358,43 @@ function renderBag() {
 
 
   list.innerHTML =
-    Object.entries(items)
-      .map(([id, item]) => `
+    Object.entries(
+      items
+    )
+      .map(
+        ([id, item]) => `
 
-        <div class="item">
+          <div class="item">
 
-          <div class="item-icon">
-            ${item.icon}
+            <div class="item-icon">
+              ${item.icon}
+            </div>
+
+            <div class="item-info">
+
+              <b>
+                ${item.name}
+                ×
+                ${state.inventory[id] || 0}
+              </b>
+
+              <span>
+                ${item.desc}
+              </span>
+
+            </div>
+
+            <button
+              class="use"
+              data-use="${id}"
+            >
+              사용
+            </button>
+
           </div>
 
-          <div class="item-info">
-
-            <b>
-              ${item.name} ×
-              ${state.inventory[id] || 0}
-            </b>
-
-            <span>
-              ${item.desc}
-            </span>
-
-          </div>
-
-          <button
-            class="use"
-            data-use="${id}"
-          >
-            사용
-          </button>
-
-        </div>
-
-      `)
+        `
+      )
       .join("");
 
 }
@@ -1959,44 +2459,50 @@ function renderShop() {
 
   specialPrice.textContent =
     Math.floor(
-      specialItem.price * 0.7
+      specialItem.price *
+      0.7
     ).toLocaleString() +
     " G";
 
 
   shopList.innerHTML =
-    Object.entries(items)
-      .map(([id, item]) => `
+    Object.entries(
+      items
+    )
+      .map(
+        ([id, item]) => `
 
-        <div class="shop-item">
+          <div class="shop-item">
 
-          <div class="item-icon">
-            ${item.icon}
+            <div class="item-icon">
+              ${item.icon}
+            </div>
+
+            <div class="item-info">
+
+              <b>
+                ${item.name}
+              </b>
+
+              <span>
+                ${item.price.toLocaleString()}
+                G ·
+                ${item.desc}
+              </span>
+
+            </div>
+
+            <button
+              class="buy"
+              data-buy="${id}"
+            >
+              구매
+            </button>
+
           </div>
 
-          <div class="item-info">
-
-            <b>
-              ${item.name}
-            </b>
-
-            <span>
-              ${item.price.toLocaleString()}
-              G · ${item.desc}
-            </span>
-
-          </div>
-
-          <button
-            class="buy"
-            data-buy="${id}"
-          >
-            구매
-          </button>
-
-        </div>
-
-      `)
+        `
+      )
       .join("");
 
 }
@@ -2029,8 +2535,13 @@ function renderMap() {
   checkExploreDay();
 
 
-  if (!area || !encounter) {
+  if (
+    !area ||
+    !encounter
+  ) {
+
     return;
+
   }
 
 
@@ -2048,7 +2559,8 @@ function renderMap() {
 
   if (!state.encounter) {
 
-    encounter.innerHTML = "";
+    encounter.innerHTML =
+      "";
 
     return;
 
@@ -2114,4 +2626,4 @@ function render() {
    시작
 ========================= */
 
-render();
+checkLogin();
