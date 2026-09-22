@@ -59,6 +59,7 @@ if(state.exploreDate===undefined){
   state.exploreDate="";
 }
 
+
 /* 멤버 */
 
 const members=[
@@ -169,36 +170,42 @@ const monsters=[
 ];
 
 
-/* 저장 */
+/* 날짜 확인 */
 
-function checkExploreDay(){ 
- 
-  const now = new Date();
+function checkExploreDay(){
 
-  const today =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0") + "-" +
-    String(now.getDate()).padStart(2, "0");
- 
-  if(state.exploreDate !== today){ 
- 
-    state.exploreDate = today; 
-    state.exploreCount = 0; 
- 
-    localStorage.setItem( 
-      "monsterGame", 
-      JSON.stringify(state) 
+  const now=new Date();
+
+  const today=
+    now.getFullYear()+"-"+
+    String(now.getMonth()+1).padStart(2,"0")+"-"+
+    String(now.getDate()).padStart(2,"0");
+
+  if(state.exploreDate!==today){
+
+    state.exploreDate=today;
+    state.exploreCount=0;
+
+    localStorage.setItem(
+      "monsterGame",
+      JSON.stringify(state)
     );
   }
+
 }
 
 
+/* 저장 */
+
 function save(){
+
   localStorage.setItem(
     "monsterGame",
     JSON.stringify(state)
   );
+
   render();
+
 }
 
 
@@ -210,8 +217,10 @@ function money(){
     document.getElementById("money");
 
   if(element){
+
     element.textContent=
       state.money.toLocaleString();
+
   }
 
 }
@@ -317,7 +326,7 @@ document.addEventListener("click",e=>{
   }
 
 
-  /* 지도 이동 */
+  /* 지도 */
 
   const mapPoint=
     e.target.closest(".map-point");
@@ -475,6 +484,7 @@ function createWildMonster(){
 
 }
 
+
 /* 탐색 */
 
 function explore(){
@@ -482,11 +492,17 @@ function explore(){
   checkExploreDay();
 
   if(state.exploreCount>=10){
-    toast("오늘은 더 이상 탐색할 수 없습니다.");
+
+    toast(
+      "오늘은 더 이상 탐색할 수 없습니다."
+    );
+
     return;
   }
 
+
   state.exploreCount++;
+
 
   /*
     10% 확률:
@@ -1108,10 +1124,18 @@ function renderMap(){
       "current-area"
     );
 
+  const exploreCount=
+    document.getElementById(
+      "explore-count"
+    );
+
   const encounter=
     document.getElementById(
       "encounter"
     );
+
+
+  checkExploreDay();
 
 
   if(!area || !encounter){
@@ -1121,6 +1145,16 @@ function renderMap(){
 
   area.textContent=
     state.area;
+
+
+  /* 탐색 횟수 표시 */
+
+  if(exploreCount){
+
+    exploreCount.textContent=
+      `오늘의 탐색 ${state.exploreCount} / 10회`;
+
+  }
 
 
   if(!state.encounter){
