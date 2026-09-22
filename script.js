@@ -7,7 +7,9 @@ const defaultState={
   },
   area:"푸른 숲",
   encounter:null,
-  monsters:[]
+  monsters:[],
+  exploreCount:0,
+  exploreDate:""
 };
 
 let state=
@@ -49,6 +51,13 @@ if(state.encounter===undefined){
   state.encounter=null;
 }
 
+if(state.exploreCount===undefined){
+  state.exploreCount=0;
+}
+
+if(state.exploreDate===undefined){
+  state.exploreDate="";
+}
 
 /* 멤버 */
 
@@ -162,13 +171,31 @@ const monsters=[
 
 /* 저장 */
 
-function save(){
+function checkExploreDay(){
 
+  const today =
+    new Date().toISOString().slice(0,10);
+
+  if(state.exploreDate !== today){
+
+    state.exploreDate = today;
+    state.exploreCount = 0;
+
+    localStorage.setItem(
+      "monsterGame",
+      JSON.stringify(state)
+    );
+
+  }
+
+}
+
+
+function save(){
   localStorage.setItem(
     "monsterGame",
     JSON.stringify(state)
   );
-
   render();
 }
 
@@ -446,10 +473,18 @@ function createWildMonster(){
 
 }
 
-
 /* 탐색 */
 
 function explore(){
+
+  checkExploreDay();
+
+  if(state.exploreCount>=10){
+    toast("오늘은 더 이상 탐색할 수 없습니다.");
+    return;
+  }
+
+  state.exploreCount++;
 
   /*
     10% 확률:
